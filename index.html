@@ -15,12 +15,17 @@
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     keyframes: {
                         fadeIn: {
-                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(15px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' }
                         }
                     },
                     animation: {
-                        'fade-in': 'fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards'
+                        'fade-in': 'fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+                        'fade-in-up': 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards'
                     }
                 }
             }
@@ -48,17 +53,6 @@
         }
         .dark .holiday-card-bg {
             background: linear-gradient(135deg, #78350f 0%, #9a3412 100%);
-        }
-        
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-        }
-        .dark .glass-panel {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         @keyframes sunSpinBreathe {
@@ -108,9 +102,9 @@
             </div>
 
             <!-- TAB 1: HOME DASHBOARD -->
-            <div id="tab-home" class="tab-content block animate-fade-in">
-                <div id="main-card" class="rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700 shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-h-[250px] flex flex-col items-center justify-center">
-                    <div id="dashboard-content" class="w-full"></div>
+            <div id="tab-home" class="tab-content block animate-fade-in h-full">
+                <div id="main-card" class="rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700 shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-h-[460px] h-full flex flex-col items-center justify-center">
+                    <div id="dashboard-content" class="w-full flex-1 flex flex-col justify-center"></div>
                 </div>
             </div>
 
@@ -311,7 +305,7 @@
         const i18n = {
             'id': {
                 app_title: 'Libur & Lembur', exciting_news: 'Berita Seru!', long_holiday: 'Libur panjang sudah dekat!',
-                holiday_today: 'Libur', countdown_holiday: 'Sisa {hrs} Jam Lagi',
+                holiday_today: 'Libur', countdown_holiday: 'Sisa {hrs}:{mins}:{secs}',
                 next_holiday: 'Libur Berikutnya', work_days: 'Hari Kerja', not_set: 'Belum di-set', towards_next: 'Menuju Libur Berikutnya',
                 date: 'Tanggal', calendar_distance: 'Jarak Kalender', days: 'Hari', no_holiday: 'Belum Ada Libur',
                 setup_holiday: 'Tandai kalender untuk mulai menghitung mundur.', open_calendar: 'Buka Kalender',
@@ -326,7 +320,7 @@
             },
             'en': {
                 app_title: 'Off & Overtime', exciting_news: 'Exciting News!', long_holiday: 'Long weekend approaching!',
-                holiday_today: 'Holiday', countdown_holiday: '{hrs} Hours Remaining',
+                holiday_today: 'Holiday', countdown_holiday: '{hrs}:{mins}:{secs} Remaining',
                 next_holiday: 'Next Holiday', work_days: 'Work Days', not_set: 'Not Set', towards_next: 'Towards Next Holiday',
                 date: 'Date', calendar_distance: 'Calendar Distance', days: 'Days', no_holiday: 'No Holidays Set',
                 setup_holiday: 'Mark your calendar to start the countdown.', open_calendar: 'Open Calendar',
@@ -457,7 +451,6 @@
             }
         }
 
-        // KUNCI PERBAIKAN FIREBASE DI SINI (onSnapshot & Manual UserID)
         window.onload = async () => {
             const overlay = document.getElementById('loading-overlay');
             document.getElementById('loading-text').innerText = 'Menyinkronkan Data...';
@@ -466,19 +459,11 @@
             setTimeout(() => overlay.classList.add('opacity-100'), 10);
 
             try {
-                // Autentikasi tetap dijalankan agar Firestore tidak menolak request karena belum login
                 await signInAnonymously(auth);
-                
-                // MENGUNCI USER ID
-                // Karena Anonymous Auth akan membuat ID berbeda di HP dan Laptop, 
-                // kita paksa mereka menunjuk ke "my_personal_account".
                 userId = "my_personal_account";
                 
                 const userRef = doc(db, 'artifacts', appIdString, 'users', userId, 'data', 'state');
                 
-                // onSnapshot = REAL-TIME LISTENER
-                // Apabila Anda mengedit libur di HP, layar di PC/Laptop Anda akan 
-                // langsung berubah tanpa perlu refresh halaman!
                 onSnapshot(userRef, (docSnap) => {
                     if (docSnap.exists()) {
                         const cloudData = docSnap.data();
@@ -493,7 +478,7 @@
                         }
                     }
                     
-                    initUI(); // Perbarui tampilan dengan data terbaru
+                    initUI();
                     
                     overlay.classList.remove('opacity-100');
                     setTimeout(() => overlay.classList.add('hidden'), 300);
@@ -606,6 +591,40 @@
             return { isHolidayToday, workingDaysLeft, calendarDaysLeft: totalCalendarDays, nextHolidayStr };
         }
 
+        window.updateWorkdayCountdown = function() {
+            const shiftText = document.getElementById('shift-countdown-text');
+            if (!shiftText) return;
+
+            const now = new Date();
+            const todayStr = toYYYYMMDD(now);
+            
+            // Cari acuan jam pulang, pakai custom shift jika ada
+            let baselineTime = appSettings.endTime;
+            if (appSettings.customShifts[todayStr]) baselineTime = appSettings.customShifts[todayStr];
+            
+            const [regHr, regMin] = baselineTime.split(':').map(Number);
+            const endOfShift = new Date(now.getFullYear(), now.getMonth(), now.getDate(), regHr, regMin, 0);
+            
+            const diffMs = endOfShift - now;
+            
+            if (diffMs > 0) {
+                // Sisa waktu bekerja (belum lembur)
+                const h = Math.floor(diffMs / (1000 * 60 * 60));
+                const m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((diffMs % (1000 * 60)) / 1000);
+                shiftText.innerText = `Sisa ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                shiftText.className = "text-stone-600 dark:text-stone-300 font-mono font-bold text-lg leading-tight whitespace-nowrap";
+            } else {
+                // Lembur dimulai! Teks berubah jadi merah berkedip
+                const overMs = Math.abs(diffMs);
+                const h = Math.floor(overMs / (1000 * 60 * 60));
+                const m = Math.floor((overMs % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((overMs % (1000 * 60)) / 1000);
+                shiftText.innerText = `+${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                shiftText.className = "text-rose-500 font-mono font-bold text-lg leading-tight whitespace-nowrap animate-pulse";
+            }
+        }
+
         function updateDashboard() {
             const card = document.getElementById('main-card');
             const content = document.getElementById('dashboard-content');
@@ -613,6 +632,19 @@
             
             const status = calculateStatus();
             if (progressInterval) clearInterval(progressInterval);
+
+            // Hitung total lembur bulan ini
+            const today = new Date();
+            const currentYearMonth = toYYYYMMDD(today).substring(0, 7); 
+            let totalMinsThisMonth = 0;
+            if(appSettings.overtimeLogs) {
+                Object.keys(appSettings.overtimeLogs).forEach(dateKey => {
+                    if (dateKey.startsWith(currentYearMonth)) totalMinsThisMonth += appSettings.overtimeLogs[dateKey].mins;
+                });
+            }
+            const otHours = Math.floor(totalMinsThisMonth / 60);
+            const otMins = totalMinsThisMonth % 60;
+            const otTextStr = `${otHours > 0 ? otHours + ' ' + t('hours') : ''} ${otMins > 0 ? otMins + ' ' + t('mins') : ''}`.trim() || `0 ${t('hours')}`;
             
             let nextHolidayText = t('not_set');
             if(status.nextHolidayStr) {
@@ -622,70 +654,97 @@
             }
 
             if (status.isHolidayToday) {
-                card.className = "rounded-[2rem] p-6 transition-all duration-500 relative overflow-hidden holiday-card-bg border-none min-h-[300px] flex flex-col justify-center shadow-lg";
+                card.className = "rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden holiday-card-bg border-none min-h-[460px] h-full flex flex-col items-center justify-center shadow-lg";
                 content.innerHTML = `
-                    <div class="text-center space-y-3 relative z-10 w-full">
-                        <div class="text-7xl animate-sun mb-2 drop-shadow-sm select-none pointer-events-none">🔆</div>
-                        <h2 class="text-3xl font-extrabold text-orange-900 dark:text-orange-100 tracking-tight drop-shadow-sm px-2">${t('holiday_today')}</h2>
-                        <div class="mt-6 w-full max-w-[280px] mx-auto bg-white/40 dark:bg-black/20 p-4 rounded-2xl backdrop-blur-md border border-white/60 dark:border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] box-border">
-                            <div class="h-3 w-full bg-black/5 dark:bg-white/10 rounded-full overflow-hidden shadow-inner relative">
-                                <div id="holiday-progress" class="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 w-0 bg-emerald-400"></div>
+                    <div class="flex flex-col items-center justify-center text-center w-full my-auto">
+                        <div class="text-7xl animate-sun mb-4 drop-shadow-sm select-none pointer-events-none opacity-0 animate-fade-in-up" style="animation-delay: 0.1s;">🔆</div>
+                        <h2 class="text-4xl font-extrabold text-orange-900 dark:text-orange-100 tracking-tight drop-shadow-sm mb-6 opacity-0 animate-fade-in-up" style="animation-delay: 0.2s;">${t('holiday_today')}</h2>
+                        
+                        <div class="w-full max-w-[80%] opacity-0 animate-fade-in-up" style="animation-delay: 0.3s;">
+                            <div class="h-1.5 w-full bg-black/10 dark:bg-white/10 rounded-full overflow-hidden relative">
+                                <div id="holiday-progress" class="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 w-0 bg-emerald-500 shadow-sm"></div>
                             </div>
-                            <div id="holiday-footnote" class="text-[11px] font-bold mt-3 text-center tracking-wide break-words text-emerald-600 dark:text-emerald-400">${t('countdown_holiday').replace('{hrs}', '0')}</div>
+                            <div id="holiday-footnote" class="text-xs font-mono font-bold mt-3 text-center tracking-wide break-words text-emerald-700 dark:text-emerald-300">...</div>
                         </div>
-                    </div>
-                    <div class="mt-6 glass-panel rounded-2xl p-4 text-center w-full max-w-[280px] mx-auto z-10 flex flex-col items-center">
-                        <p class="text-[10px] text-stone-700 dark:text-stone-300 uppercase tracking-widest font-bold mb-1">${t('next_holiday')}</p>
-                        ${status.nextHolidayStr ? 
-                            `<div class="flex items-baseline justify-center gap-1.5 mt-1">
-                                <span class="font-extrabold text-xl text-stone-900 dark:text-white">${status.workingDaysLeft}</span>
-                                <span class="text-stone-800 dark:text-stone-200 font-medium text-sm">${t('work_days')}</span>
+
+                        <div class="mt-12 flex flex-col space-y-8 w-full opacity-0 animate-fade-in-up" style="animation-delay: 0.4s;">
+                            <div>
+                                <p class="text-[10px] text-orange-800/70 dark:text-orange-200/70 font-bold uppercase tracking-widest mb-1.5">Lembur Bulan Ini</p>
+                                <p class="text-orange-900 dark:text-orange-100 font-black text-2xl">${otTextStr}</p>
                             </div>
-                            <p class="text-[11px] text-stone-800 dark:text-stone-200 font-medium bg-white/40 dark:bg-black/30 inline-block px-3 py-1.5 rounded-full mt-2 shadow-sm max-w-full truncate">${nextHolidayText}</p>`
-                            : 
-                            `<p class="text-stone-800 dark:text-stone-200 text-sm font-medium mt-1">${t('not_set')}</p>`
-                        }
+                            
+                            <div>
+                                <p class="text-[10px] text-orange-800/70 dark:text-orange-200/70 font-bold uppercase tracking-widest mb-1.5">${t('next_holiday')}</p>
+                                ${status.nextHolidayStr ? 
+                                    `<p class="text-orange-900 dark:text-orange-100 font-bold text-lg">${nextHolidayText}</p>`
+                                    : `<p class="text-orange-900 dark:text-orange-100 text-sm font-medium">${t('not_set')}</p>`
+                                }
+                            </div>
+                        </div>
                     </div>
                 `;
                 updateProgressBar();
-                progressInterval = setInterval(updateProgressBar, 60000); 
+                // Tick setiap 1 detik
+                progressInterval = setInterval(updateProgressBar, 1000); 
             } else {
-                card.className = "rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700 shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-h-[250px] flex flex-col items-center justify-center";
+                card.className = "rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700 shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-h-[460px] h-full flex flex-col items-center justify-center";
                 if (status.nextHolidayStr) {
                     content.innerHTML = `
-                        <div class="flex flex-col items-center text-center w-full">
-                            <div class="inline-flex items-center justify-center p-3 bg-teal-50 dark:bg-teal-900/30 rounded-2xl mb-5 text-teal-600 dark:text-teal-400 border border-teal-100/50 dark:border-teal-800/50">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div class="flex flex-col items-center justify-center text-center w-full my-auto">
+                            <h2 class="text-stone-400 dark:text-stone-500 font-bold uppercase tracking-[0.3em] text-[10px] mb-4 opacity-0 animate-fade-in-up" style="animation-delay: 0.1s;">${t('towards_next')}</h2>
+                            
+                            <div class="mb-1 opacity-0 animate-fade-in-up" style="animation-delay: 0.2s;">
+                                <span class="text-[6rem] leading-[1] font-black text-stone-800 dark:text-white tracking-tighter">${status.workingDaysLeft}</span>
                             </div>
-                            <h2 class="text-stone-400 dark:text-stone-500 font-bold uppercase tracking-[0.2em] text-[10px] mb-2">${t('towards_next')}</h2>
-                            <div class="flex items-baseline justify-center gap-2 mb-2">
-                                <span class="text-7xl font-extrabold text-stone-800 dark:text-white tracking-tighter">${status.workingDaysLeft}</span>
-                            </div>
-                            <div class="text-stone-500 dark:text-stone-400 font-medium text-sm mb-6 bg-stone-50 dark:bg-stone-900 px-4 py-1.5 rounded-full border border-stone-100 dark:border-stone-700">${t('work_days')}</div>
-                            <div class="w-full pt-5 border-t border-stone-100 dark:border-stone-700 flex justify-between items-start px-2 gap-3 overflow-hidden">
-                                <div class="text-left flex-1 min-w-0">
-                                    <p class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-wider mb-0.5">${t('date')}</p>
-                                    <p class="text-stone-700 dark:text-stone-300 font-semibold text-xs truncate" title="${nextHolidayText}">${nextHolidayText}</p>
+                            
+                            <div class="text-stone-500 dark:text-stone-400 font-bold text-sm mb-12 uppercase tracking-widest opacity-0 animate-fade-in-up" style="animation-delay: 0.3s;">${t('work_days')}</div>
+                            
+                            <div class="flex flex-col space-y-4 w-full opacity-0 animate-fade-in-up" style="animation-delay: 0.4s;">
+                                <div class="text-center mb-2">
+                                    <p class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1.5">${t('date')}</p>
+                                    <p class="text-stone-700 dark:text-stone-200 font-bold text-xl">${nextHolidayText}</p>
                                 </div>
-                                <div class="text-right flex-shrink-0">
-                                    <p class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-wider mb-0.5">${t('calendar_distance')}</p>
-                                    <p class="text-stone-700 dark:text-stone-300 font-semibold text-xs">${status.calendarDaysLeft} ${t('days')}</p>
+                                
+                                <div class="grid grid-cols-2 gap-3 w-full">
+                                    <div class="bg-stone-50 dark:bg-stone-900/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-700/50 shadow-sm text-left flex flex-col justify-center overflow-hidden">
+                                        <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">Lembur Bln Ini</p>
+                                        <p class="text-teal-600 dark:text-teal-400 font-black text-lg leading-tight truncate">${otTextStr}</p>
+                                    </div>
+                                    <div class="bg-stone-50 dark:bg-stone-900/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-700/50 shadow-sm text-left flex flex-col justify-center overflow-hidden">
+                                        <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">Status Jam</p>
+                                        <p id="shift-countdown-text" class="text-stone-600 dark:text-stone-300 font-mono font-bold text-lg leading-tight truncate">--:--:--</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     `;
                 } else {
                     content.innerHTML = `
-                        <div class="flex flex-col items-center text-center py-6 w-full">
-                            <div class="w-16 h-16 bg-stone-50 dark:bg-stone-700 rounded-full flex items-center justify-center mb-4 border border-stone-100 dark:border-stone-600 shadow-sm">
-                                <span class="text-3xl select-none pointer-events-none">📅</span>
+                        <div class="flex flex-col items-center justify-center text-center w-full my-auto">
+                            <div class="text-5xl select-none pointer-events-none mb-6 opacity-0 animate-fade-in-up" style="animation-delay: 0.1s;">📅</div>
+                            <h2 class="text-2xl font-black text-stone-800 dark:text-white mb-2 tracking-tight opacity-0 animate-fade-in-up" style="animation-delay: 0.2s;">${t('no_holiday')}</h2>
+                            <p class="text-sm text-stone-500 dark:text-stone-400 max-w-[220px] leading-relaxed break-words opacity-0 animate-fade-in-up" style="animation-delay: 0.3s;">${t('setup_holiday')}</p>
+                            
+                            <div class="mt-8 grid grid-cols-2 gap-3 w-full opacity-0 animate-fade-in-up" style="animation-delay: 0.4s;">
+                                <div class="bg-stone-50 dark:bg-stone-900/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-700/50 shadow-sm text-left flex flex-col justify-center overflow-hidden">
+                                    <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">Lembur Bln Ini</p>
+                                    <p class="text-teal-600 dark:text-teal-400 font-black text-lg leading-tight truncate">${otTextStr}</p>
+                                </div>
+                                <div class="bg-stone-50 dark:bg-stone-900/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-700/50 shadow-sm text-left flex flex-col justify-center overflow-hidden">
+                                    <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">Status Jam</p>
+                                    <p id="shift-countdown-text" class="text-stone-600 dark:text-stone-300 font-mono font-bold text-lg leading-tight truncate">--:--:--</p>
+                                </div>
                             </div>
-                            <h2 class="text-lg font-bold text-stone-800 dark:text-white">${t('no_holiday')}</h2>
-                            <p class="text-sm text-stone-500 dark:text-stone-400 mt-2 max-w-[220px] leading-relaxed break-words">${t('setup_holiday')}</p>
-                            <button onclick="window.switchTab('tab-calendar')" class="mt-6 px-6 py-2.5 bg-teal-50 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-full text-sm font-bold hover:bg-teal-100 dark:hover:bg-teal-900/60 active:scale-95 transition-all shadow-sm outline-none focus:outline-none">${t('open_calendar')}</button>
+
+                            <button onclick="window.switchTab('tab-calendar')" class="mt-8 px-8 py-3 bg-teal-50 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-full text-sm font-bold hover:bg-teal-100 dark:hover:bg-teal-900/60 active:scale-95 transition-all shadow-sm outline-none focus:outline-none opacity-0 animate-fade-in-up" style="animation-delay: 0.5s;">${t('open_calendar')}</button>
                         </div>
                     `;
                 }
+                
+                // Panggil segera sebelum interval
+                window.updateWorkdayCountdown();
+                // Tick setiap 1 detik
+                progressInterval = setInterval(window.updateWorkdayCountdown, 1000); 
             }
         }
 
@@ -708,10 +767,21 @@
             else if (percent >= 80) { colorClass = 'bg-rose-500'; textColor = 'text-rose-700 dark:text-rose-400'; }
 
             bar.className = `absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ${colorClass}`;
+            
+            // Hitung Jam, Menit, Detik
             const remainingMs = totalMs - elapsedMs;
             const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
-            footnote.className = `text-[11px] font-bold mt-3 text-center tracking-wide break-words transition-colors duration-1000 ${textColor}`;
-            footnote.innerText = t('countdown_holiday').replace('{hrs}', remainingHours);
+            const remainingMins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+            const remainingSecs = Math.floor((remainingMs % (1000 * 60)) / 1000);
+            
+            footnote.className = `text-xs font-mono font-bold mt-3 text-center tracking-wide break-words transition-colors duration-1000 ${textColor}`;
+            
+            let txt = t('countdown_holiday');
+            txt = txt.replace('{hrs}', String(remainingHours).padStart(2, '0'));
+            txt = txt.replace('{mins}', String(remainingMins).padStart(2, '0'));
+            txt = txt.replace('{secs}', String(remainingSecs).padStart(2, '0'));
+            
+            footnote.innerText = txt;
         }
 
         window.updateShiftIndicator = function() {
@@ -948,6 +1018,10 @@
             firstDay = firstDay === 0 ? 6 : firstDay - 1; 
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const todayStr = toYYYYMMDD(today);
+
             for (let i = 0; i < firstDay; i++) {
                 grid.appendChild(document.createElement('div'));
             }
@@ -955,6 +1029,7 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateObj = new Date(year, month, day);
                 const dateStr = toYYYYMMDD(dateObj);
+                const isPast = dateStr < todayStr;
                 const isSelected = selectedDates.includes(dateStr);
                 const hasCustomShift = appSettings.customShifts[dateStr] !== undefined;
                 
@@ -962,33 +1037,41 @@
                 btnContainer.className = "flex justify-center relative";
 
                 const btn = document.createElement('button');
-                btn.className = `cal-btn w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-[12px] font-semibold transition-all duration-300 outline-none focus:outline-none select-none touch-manipulation z-10 
-                    ${isSelected ? 'bg-teal-500 text-white shadow-[0_4px_12px_rgba(20,184,166,0.4)] transform scale-[1.05]' : 'text-stone-600 dark:text-stone-300 bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700'} 
-                    ${isEditMode && !isSelected ? 'hover:border-stone-300 dark:hover:border-stone-600 bg-stone-50 dark:bg-stone-900/50 hover:bg-stone-200 dark:hover:bg-stone-700 cursor-pointer' : ''}`;
-                btn.innerText = day;
                 
-                let tapCount = 0;
-                let tapTimer;
+                if (isPast) {
+                    // Jika tanggal sudah berlalu: Ubah jadi abu-abu pudar, tidak bisa ditekan, dan status liburnya dihapus.
+                    btn.className = `cal-btn w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-[12px] font-semibold select-none z-10 text-stone-300 dark:text-stone-600 opacity-50 cursor-default pointer-events-none`;
+                } else {
+                    // Jika hari ini atau hari di masa depan
+                    btn.className = `cal-btn w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-[12px] font-semibold transition-all duration-300 outline-none focus:outline-none select-none touch-manipulation z-10 
+                        ${isSelected ? 'bg-teal-500 text-white shadow-[0_4px_12px_rgba(20,184,166,0.4)] transform scale-[1.05]' : 'text-stone-600 dark:text-stone-300 bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700'} 
+                        ${isEditMode && !isSelected ? 'hover:border-stone-300 dark:hover:border-stone-600 bg-stone-50 dark:bg-stone-900/50 hover:bg-stone-200 dark:hover:bg-stone-700 cursor-pointer' : ''}`;
+                    
+                    let tapCount = 0;
+                    let tapTimer;
 
-                btn.onpointerdown = (e) => {
-                    e.preventDefault();
-                    if (isEditMode) {
-                        toggleHoliday(dateStr);
-                    } else {
-                        tapCount++;
-                        if (tapCount === 1) {
-                            tapTimer = setTimeout(() => { tapCount = 0; }, 250); 
-                        } else if (tapCount === 2) {
-                            clearTimeout(tapTimer);
-                            tapCount = 0;
-                            openShiftBubble(dateStr, btn);
+                    btn.onpointerdown = (e) => {
+                        e.preventDefault();
+                        if (isEditMode) {
+                            toggleHoliday(dateStr);
+                        } else {
+                            tapCount++;
+                            if (tapCount === 1) {
+                                tapTimer = setTimeout(() => { tapCount = 0; }, 250); 
+                            } else if (tapCount === 2) {
+                                clearTimeout(tapTimer);
+                                tapCount = 0;
+                                openShiftBubble(dateStr, btn);
+                            }
                         }
-                    }
-                };
+                    };
+                }
                 
+                btn.innerText = day;
                 btnContainer.appendChild(btn);
 
-                if(hasCustomShift) {
+                // Tetap sembunyikan tanda shift di hari yang sudah lewat
+                if(!isPast && hasCustomShift) {
                     const endStr = appSettings.customShifts[dateStr];
                     const [eHr, eMin] = endStr.split(':').map(Number);
                     const startHr = (eHr - 9 + 24) % 24;
