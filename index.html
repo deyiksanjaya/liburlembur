@@ -82,8 +82,7 @@
             <h1 id="app-header-title" class="text-xl font-extrabold bg-gradient-to-r from-teal-500 to-emerald-400 bg-clip-text text-transparent tracking-tight text-center">Libur & Lembur</h1>
         </header>
 
-        <!-- DIPERBAIKI: Mengubah pb-36 menjadi pb-20 menyesuaikan toolbar baru -->
-        <main class="flex-1 p-5 overflow-y-auto overflow-x-hidden w-full relative overscroll-contain pb-20">
+        <main class="flex-1 p-5 overflow-y-auto overflow-x-hidden w-full relative overscroll-contain pb-28">
             
             <div id="exciting-news" class="hidden mb-6 bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-900/30 dark:to-emerald-900/30 rounded-2xl p-4 shadow-sm border border-teal-100/50 dark:border-teal-800/50 transform transition-all relative overflow-hidden">
                 <div class="absolute top-0 right-0 -mt-2 -mr-2 text-6xl opacity-10">🎉</div>
@@ -98,7 +97,7 @@
 
             <!-- TAB 1: HOME DASHBOARD -->
             <div id="tab-home" class="tab-content block h-full">
-                <div id="main-card" class="rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700 shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-h-[460px] h-full flex flex-col items-center justify-center">
+                <div id="main-card" class="rounded-[2rem] p-6 transition-all duration-500 relative overflow-hidden bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700 shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-h-[380px] h-full flex flex-col items-center justify-center">
                     <div id="dashboard-content" class="w-full flex-1 flex flex-col justify-center items-center text-center"></div>
                 </div>
             </div>
@@ -700,7 +699,7 @@
                 
                 labelText.innerText = t('timeLeftLabel');
                 shiftText.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                shiftText.className = "text-3xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm";
+                shiftText.className = "text-2xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm";
             } else {
                 const overMs = Math.abs(diffMs);
                 const h = Math.floor(overMs / (1000 * 60 * 60));
@@ -709,7 +708,7 @@
                 
                 labelText.innerText = t('overtimeActiveLabel');
                 shiftText.innerText = `+${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                shiftText.className = "text-3xl font-mono font-bold text-rose-500 animate-pulse-fast tabular-nums tracking-tighter drop-shadow-sm";
+                shiftText.className = "text-2xl font-mono font-bold text-rose-500 animate-pulse-fast tabular-nums tracking-tighter drop-shadow-sm";
             }
         }
 
@@ -747,10 +746,10 @@
             }
 
             if (status.isHolidayToday) {
-                card.className = "rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden holiday-card-bg border-none min-h-[460px] h-full flex flex-col items-center justify-center shadow-lg";
+                card.className = "rounded-[2rem] p-6 transition-all duration-500 relative overflow-hidden holiday-card-bg border-none min-h-[380px] h-full flex flex-col items-center justify-center shadow-lg";
                 content.innerHTML = `
-                    <div class="text-7xl animate-sun mb-4 drop-shadow-sm select-none opacity-0 animate-[fadeInUp_0.6s_ease-out_0.1s_forwards]">🔆</div>
-                    <h2 class="text-4xl font-extrabold text-orange-900 dark:text-orange-100 tracking-tight drop-shadow-sm mb-6 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards]">${t('holidayTitle')}</h2>
+                    <div class="text-6xl animate-sun mb-3 drop-shadow-sm select-none opacity-0 animate-[fadeInUp_0.6s_ease-out_0.1s_forwards]">🔆</div>
+                    <h2 class="text-3xl font-extrabold text-orange-900 dark:text-orange-100 tracking-tight drop-shadow-sm mb-5 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards]">${t('holidayTitle')}</h2>
                     
                     <div class="w-full max-w-[80%] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]">
                         <div class="h-1.5 w-full bg-black/10 dark:bg-white/10 rounded-full overflow-hidden relative">
@@ -759,7 +758,7 @@
                         <div id="holiday-footnote" class="text-xs font-mono font-bold mt-3 text-center tracking-wide break-words text-emerald-700 dark:text-emerald-300">...</div>
                     </div>
 
-                    <div class="mt-12 flex flex-col items-center space-y-6 w-full opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
+                    <div class="mt-8 flex flex-col items-center space-y-5 w-full opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
                         <div class="flex justify-around w-full max-w-[280px]">
                             <div class="text-center">
                                 <p class="text-[10px] text-orange-800/70 dark:text-orange-200/70 font-bold uppercase tracking-widest mb-1">${t('overtimeLabel')}</p>
@@ -781,27 +780,27 @@
                 updateProgressBar();
                 progressInterval = setInterval(updateProgressBar, 1000); 
             } else {
-                card.className = "rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700 shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-h-[460px] h-full flex flex-col items-center justify-center";
+                card.className = "rounded-[2rem] p-6 transition-all duration-500 relative overflow-hidden bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700 shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-h-[380px] h-full flex flex-col items-center justify-center";
                 
                 if (status.nextHolidayStr) {
                     content.innerHTML = `
-                        <h2 class="text-stone-400 dark:text-stone-500 font-bold uppercase tracking-[0.3em] text-[9px] mb-3 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.1s_forwards]">${t('nextHolidayHeading')}</h2>
+                        <h2 class="text-stone-400 dark:text-stone-500 font-bold uppercase tracking-[0.3em] text-[9px] mb-2 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.1s_forwards]">${t('nextHolidayHeading')}</h2>
                         
                         <div class="mb-1 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards] flex items-baseline justify-center gap-2">
-                            <span class="text-[7rem] leading-[1] font-black text-stone-800 dark:text-white tracking-tighter drop-shadow-sm">${status.workingDaysLeft}</span>
+                            <span class="text-[6rem] leading-[1] font-black text-stone-800 dark:text-white tracking-tighter drop-shadow-sm">${status.workingDaysLeft}</span>
                         </div>
                         
-                        <div class="flex items-center justify-center gap-3 mb-10 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]">
+                        <div class="flex items-center justify-center gap-3 mb-6 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]">
                             <span class="text-stone-500 dark:text-stone-400 font-bold text-sm uppercase tracking-widest">${t('workdayLabel')}</span>
                             <span class="w-1.5 h-1.5 rounded-full bg-stone-300 dark:bg-stone-600"></span>
                             <span class="text-stone-400 dark:text-stone-500 font-semibold text-xs tracking-wide">${status.totalCalendarDays} ${t('distanceDays')}</span>
                         </div>
                         
-                        <div class="flex flex-col space-y-7 w-full max-w-[280px] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
+                        <div class="flex flex-col space-y-5 w-full max-w-[280px] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
                             
                             <div class="text-center">
-                                <p id="shift-countdown-label" class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1.5 transition-colors">${t('timeLeftLabel')}</p>
-                                <p id="shift-countdown-text" class="text-3xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm">--:--:--</p>
+                                <p id="shift-countdown-label" class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 transition-colors">${t('timeLeftLabel')}</p>
+                                <p id="shift-countdown-text" class="text-2xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm">--:--:--</p>
                             </div>
 
                             <div class="grid grid-cols-2 gap-4 w-full">
@@ -815,7 +814,7 @@
                                 </div>
                             </div>
 
-                            <div class="text-center pt-5 border-t border-stone-100 dark:border-stone-700">
+                            <div class="text-center pt-4 border-t border-stone-100 dark:border-stone-700">
                                 <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1.5">${t('nextHolidayLabel')}</p>
                                 <p class="text-stone-700 dark:text-stone-200 font-bold text-sm">${nextHolidayText}</p>
                             </div>
@@ -823,11 +822,11 @@
                     `;
                 } else {
                     content.innerHTML = `
-                        <div class="text-5xl select-none pointer-events-none mb-6 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.1s_forwards]">📅</div>
+                        <div class="text-5xl select-none pointer-events-none mb-4 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.1s_forwards]">📅</div>
                         <h2 class="text-2xl font-black text-stone-800 dark:text-white mb-2 tracking-tight opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards]">${t('noHolidayHeading')}</h2>
                         <p class="text-sm text-stone-500 dark:text-stone-400 max-w-[220px] leading-relaxed break-words opacity-0 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]">${t('noHolidayDesc')}</p>
                         
-                        <div class="mt-8 grid grid-cols-2 gap-4 w-full max-w-[280px] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
+                        <div class="mt-6 grid grid-cols-2 gap-4 w-full max-w-[280px] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
                             <div class="text-center">
                                 <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">${t('overtimeLabel')}</p>
                                 <p class="text-teal-600 dark:text-teal-400 font-black text-xl leading-tight truncate drop-shadow-sm">${otTextStr}</p>
@@ -838,9 +837,9 @@
                             </div>
                         </div>
 
-                        <div class="mt-8 w-full opacity-0 animate-[fadeInUp_0.6s_ease-out_0.45s_forwards]">
-                            <p id="shift-countdown-label" class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1.5 transition-colors">${t('timeLeftLabel')}</p>
-                            <p id="shift-countdown-text" class="text-3xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm">--:--:--</p>
+                        <div class="mt-6 w-full opacity-0 animate-[fadeInUp_0.6s_ease-out_0.45s_forwards]">
+                            <p id="shift-countdown-label" class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 transition-colors">${t('timeLeftLabel')}</p>
+                            <p id="shift-countdown-text" class="text-2xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm">--:--:--</p>
                         </div>
                     `;
                 }
