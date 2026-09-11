@@ -14,24 +14,24 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' }
-                        },
                         fadeInUp: {
                             '0%': { opacity: '0', transform: 'translateY(15px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        pulseRed: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.6' }
                         }
                     },
                     animation: {
-                        'fade-in': 'fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-                        'fade-in-up': 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+                        'fade-in-up': 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pulse-fast': 'pulseRed 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite'
                     }
                 }
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
         html, body {
@@ -42,18 +42,14 @@
 
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        input[type="date"], input[type="time"] {
+        input[type="date"], input[type="time"], select {
             -webkit-appearance: none;
             min-width: 0 !important;
             appearance: none;
         }
         
-        .holiday-card-bg {
-            background: linear-gradient(135deg, #fef08a 0%, #fed7aa 100%);
-        }
-        .dark .holiday-card-bg {
-            background: linear-gradient(135deg, #78350f 0%, #9a3412 100%);
-        }
+        .holiday-card-bg { background: linear-gradient(135deg, #fef08a 0%, #fed7aa 100%); }
+        .dark .holiday-card-bg { background: linear-gradient(135deg, #78350f 0%, #9a3412 100%); }
 
         @keyframes sunSpinBreathe {
             0% { transform: rotate(0deg) scale(1); }
@@ -64,99 +60,96 @@
 
         ::-webkit-scrollbar { width: 0px; background: transparent; }
         
-        .safe-pb { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+        .safe-pb { 
+            padding-bottom: calc(2rem + env(safe-area-inset-bottom)); 
+            padding-top: 0.75rem; 
+        }
+        
+        input:focus { font-size: 16px !important; }
     </style>
 </head>
 <body class="bg-[#f5f5f4] dark:bg-stone-950 text-stone-800 dark:text-stone-100 h-[100dvh] overflow-hidden flex justify-center transition-colors duration-300 relative">
 
-    <!-- Animasi Loading -->
     <div id="loading-overlay" class="fixed inset-0 z-[100] bg-white/70 dark:bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center hidden opacity-0 transition-opacity duration-300">
         <div class="w-12 h-12 border-4 border-stone-200 dark:border-stone-700 border-t-teal-500 rounded-full animate-spin"></div>
-        <p id="loading-text" class="mt-4 text-sm font-bold text-teal-600 dark:text-teal-400 animate-pulse" data-i18n="saving">Menyimpan...</p>
+        <p id="loading-text" class="mt-4 text-sm font-bold text-teal-600 dark:text-teal-400 animate-pulse">Menyimpan...</p>
     </div>
 
-    <!-- Container Utama App-like -->
     <div class="w-full max-w-md bg-stone-50 dark:bg-stone-900 h-full flex flex-col relative shadow-[0_0_40px_rgba(0,0,0,0.05)] transition-colors duration-300">
         
-        <!-- Header Fix -->
-        <header class="p-5 flex justify-between items-center bg-stone-50/90 dark:bg-stone-900/90 z-20 backdrop-blur-md border-b border-stone-200/50 dark:border-stone-800/50 flex-shrink-0 pt-[calc(1.25rem+env(safe-area-inset-top))]">
-            <h1 class="text-xl font-extrabold bg-gradient-to-r from-teal-500 to-emerald-400 bg-clip-text text-transparent tracking-tight" data-i18n="app_title">Libur & Lembur</h1>
-            <div class="w-8 h-8 rounded-full bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 flex items-center justify-center text-xs font-bold text-stone-500 dark:text-stone-400 shadow-sm">
-                LL
-            </div>
+        <header class="p-5 flex justify-center items-center bg-stone-50/90 dark:bg-stone-900/90 z-20 backdrop-blur-md border-b border-stone-200/50 dark:border-stone-800/50 flex-shrink-0 pt-[calc(1.25rem+env(safe-area-inset-top))]">
+            <h1 id="app-header-title" class="text-xl font-extrabold bg-gradient-to-r from-teal-500 to-emerald-400 bg-clip-text text-transparent tracking-tight text-center">Libur & Lembur</h1>
         </header>
 
-        <!-- Area Konten Scrollable -->
-        <main class="flex-1 p-5 overflow-y-auto overflow-x-hidden w-full relative overscroll-contain pb-28">
+        <main class="flex-1 p-5 overflow-y-auto overflow-x-hidden w-full relative overscroll-contain pb-36">
             
-            <!-- Exciting News Banner -->
             <div id="exciting-news" class="hidden mb-6 bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-900/30 dark:to-emerald-900/30 rounded-2xl p-4 shadow-sm border border-teal-100/50 dark:border-teal-800/50 transform transition-all relative overflow-hidden">
                 <div class="absolute top-0 right-0 -mt-2 -mr-2 text-6xl opacity-10">🎉</div>
                 <div class="flex items-center gap-4 relative z-10">
                     <div class="w-10 h-10 flex-shrink-0 rounded-full bg-teal-100 dark:bg-teal-800 flex items-center justify-center text-xl shadow-inner">✈️</div>
                     <div class="flex-1 min-w-0">
-                        <h3 class="font-bold text-teal-800 dark:text-teal-300 text-xs tracking-wider uppercase mb-0.5" data-i18n="exciting_news">Berita Seru!</h3>
-                        <p class="text-teal-700 dark:text-teal-400 text-sm font-medium leading-tight break-words" data-i18n="long_holiday">Libur panjang sudah dekat!</p>
+                        <h3 id="news-header-label" class="font-bold text-teal-800 dark:text-teal-300 text-xs tracking-wider uppercase mb-0.5">Berita Seru!</h3>
+                        <p id="news-desc-label" class="text-teal-700 dark:text-teal-400 text-sm font-medium leading-tight break-words">Libur panjang sudah dekat!</p>
                     </div>
                 </div>
             </div>
 
             <!-- TAB 1: HOME DASHBOARD -->
-            <div id="tab-home" class="tab-content block animate-fade-in h-full">
+            <div id="tab-home" class="tab-content block h-full">
                 <div id="main-card" class="rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700 shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-h-[460px] h-full flex flex-col items-center justify-center">
-                    <div id="dashboard-content" class="w-full flex-1 flex flex-col justify-center"></div>
+                    <div id="dashboard-content" class="w-full flex-1 flex flex-col justify-center items-center text-center"></div>
                 </div>
             </div>
 
             <!-- TAB 2: LEMBUR -->
-            <div id="tab-lembur" class="tab-content hidden animate-fade-in">
+            <div id="tab-lembur" class="tab-content hidden animate-[fadeInUp_0.3s_ease-out]">
                 <div class="bg-white dark:bg-stone-800 rounded-3xl p-5 border border-stone-100 dark:border-stone-700 shadow-sm overflow-hidden">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-lg font-bold text-stone-800 dark:text-white leading-tight" data-i18n="overtime_title">Buku Lembur</h2>
+                        <h2 id="lembur-title" class="text-lg font-bold text-stone-800 dark:text-white leading-tight">Buku Lembur</h2>
                         <span id="reg-time-display" class="text-[10px] font-semibold text-stone-400 bg-stone-100 dark:bg-stone-700 px-2 py-1 rounded-md tracking-wide">Reg: 17:00</span>
                     </div>
 
                     <div class="bg-gradient-to-r from-stone-50 to-stone-100 dark:from-stone-900 dark:to-stone-800 rounded-2xl p-5 mb-6 flex justify-between items-center border border-stone-200 dark:border-stone-700 shadow-inner">
-                        <span class="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider" data-i18n="total_this_month">Total Bulan Ini</span>
+                        <span id="lembur-monthly-label" class="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider">Total Bulan Ini</span>
                         <span id="monthly-overtime-result" class="text-xl font-extrabold text-teal-600 dark:text-teal-400">0 Jam 0 Mnt</span>
                     </div>
 
                     <div class="mb-6 bg-stone-50 dark:bg-stone-900/50 p-4 rounded-2xl border border-stone-100 dark:border-stone-700/50">
                         <div class="flex flex-col gap-4 mb-4">
                             <div class="w-full relative">
-                                <label class="text-[10px] text-stone-500 dark:text-stone-400 font-bold uppercase tracking-wider block mb-2" data-i18n="date">Tanggal</label>
+                                <label id="lembur-date-label" class="text-[10px] text-stone-500 dark:text-stone-400 font-bold uppercase tracking-wider block mb-2">Tanggal</label>
                                 <input type="date" id="overtime-date" onchange="window.updateShiftIndicator()" class="w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl px-3 py-2.5 text-sm font-semibold text-stone-700 dark:text-stone-200 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all shadow-sm">
                             </div>
                             <div class="w-full relative">
-                                <label class="text-[10px] text-stone-500 dark:text-stone-400 font-bold uppercase tracking-wider block mb-2" data-i18n="actual_end_time">Jam Pulang</label>
+                                <label id="lembur-time-label" class="text-[10px] text-stone-500 dark:text-stone-400 font-bold uppercase tracking-wider block mb-2">Jam Pulang</label>
                                 <input type="time" id="actual-end-time" class="w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl px-3 py-2.5 text-sm font-semibold text-stone-700 dark:text-stone-200 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all shadow-sm">
                                 
                                 <div id="custom-shift-badge" class="hidden absolute top-0 right-0 text-[9px] bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold shadow-sm border border-blue-200 dark:border-blue-800">Shift Custom</div>
                             </div>
                         </div>
-                        <button onclick="window.logOvertime()" class="w-full py-3 rounded-xl font-bold text-sm transition-all duration-300 bg-teal-500 text-white shadow-[0_4px_12px_rgba(20,184,166,0.3)] hover:bg-teal-400 active:scale-95 flex items-center justify-center">
-                            <span data-i18n="calc_overtime">Simpan</span>
+                        <button id="lembur-save-btn" onclick="window.logOvertime()" class="w-full py-3 rounded-xl font-bold text-sm transition-all duration-300 bg-teal-500 text-white shadow-[0_4px_12px_rgba(20,184,166,0.3)] hover:bg-teal-400 active:scale-95 flex items-center justify-center">
+                            Simpan
                         </button>
                     </div>
 
                     <div>
-                        <h4 class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-wider mb-4 border-b border-stone-100 dark:border-stone-700 pb-2" data-i18n="history_title">Riwayat Bulan Ini</h4>
+                        <h4 id="lembur-history-label" class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-wider mb-4 border-b border-stone-100 dark:border-stone-700 pb-2">Riwayat Bulan Ini</h4>
                         <div id="overtime-logs-container" class="space-y-3 pb-4"></div>
                     </div>
                 </div>
             </div>
 
             <!-- TAB 3: KALENDER -->
-            <div id="tab-calendar" class="tab-content hidden animate-fade-in">
+            <div id="tab-calendar" class="tab-content hidden animate-[fadeInUp_0.3s_ease-out]">
                 <div class="bg-white dark:bg-stone-800 rounded-3xl p-5 shadow-sm border border-stone-100 dark:border-stone-700 relative">
                     
                     <div class="flex justify-between items-center mb-6">
                         <div class="flex flex-col flex-1 pr-2">
-                            <h2 class="text-lg font-bold text-stone-800 dark:text-white leading-tight" data-i18n="manage_holiday">Atur Hari Libur</h2>
-                            <span class="text-[10px] text-stone-400 mt-1 leading-tight block" data-i18n="double_tap_info">Sentuh tanggal 2x untuk set shift khusus.</span>
+                            <h2 id="cal-main-title" class="text-lg font-bold text-stone-800 dark:text-white leading-tight">Atur Kalender</h2>
+                            <span id="calendar-hint" class="text-[10px] text-stone-400 mt-1 leading-tight block">Tap 2x pada tanggal untuk set shift khusus.</span>
                         </div>
                         <button id="btn-edit-calendar" onclick="window.toggleEditMode()" class="px-4 py-2 rounded-full text-xs font-bold transition-all bg-stone-100 text-stone-600 dark:bg-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-600 active:scale-95 outline-none flex-shrink-0 shadow-sm">
-                            <span data-i18n="edit_calendar">Edit</span>
+                            Edit
                         </button>
                     </div>
 
@@ -170,39 +163,42 @@
                         </button>
                     </div>
                     
-                    <div class="grid grid-cols-7 gap-y-4 gap-x-1 sm:gap-x-2 text-center text-[10px] font-bold text-stone-400 dark:text-stone-500 mb-4 px-1" id="calendar-days-header"></div>
+                    <div class="grid grid-cols-7 gap-y-4 gap-x-1 sm:gap-x-2 text-center text-[10px] font-bold text-stone-400 dark:text-stone-500 mb-4 px-1" id="calendar-days-header">
+                        <div>Sen</div><div>Sel</div><div>Rab</div><div>Kam</div><div>Jum</div><div>Sab</div><div>Min</div>
+                    </div>
                     <div id="calendar-grid" class="grid grid-cols-7 gap-y-7 gap-x-1 sm:gap-x-2 px-1 pb-2"></div>
                 </div>
             </div>
 
             <!-- TAB 4: PENGATURAN -->
-            <div id="tab-settings" class="tab-content hidden animate-fade-in">
+            <div id="tab-settings" class="tab-content hidden animate-[fadeInUp_0.3s_ease-out]">
                 <div class="bg-white dark:bg-stone-800 rounded-3xl p-6 shadow-sm border border-stone-100 dark:border-stone-700">
-                    <h2 class="text-lg font-bold text-stone-800 dark:text-white mb-6" data-i18n="settings_title">Pengaturan</h2>
+                    <h2 id="settings-title" class="text-lg font-bold text-stone-800 dark:text-white mb-6">Pengaturan</h2>
                     
                     <div class="space-y-7">
                         <div class="flex items-center justify-between border-b border-stone-100 dark:border-stone-700 pb-6 gap-4">
                             <div class="flex-1 min-w-0">
-                                <h3 class="font-semibold text-stone-700 dark:text-stone-200 text-sm truncate" data-i18n="regular_end_time">Jam Pulang Reguler</h3>
-                                <p class="text-[10px] text-stone-400 mt-1 leading-tight break-words pr-2" data-i18n="regular_end_time_desc">Patokan waktu menghitung lembur</p>
+                                <h3 id="set-endtime-label" class="font-semibold text-stone-700 dark:text-stone-200 text-sm truncate">Jam Pulang Reguler</h3>
+                                <p id="set-endtime-desc" class="text-[10px] text-stone-400 mt-1 leading-tight break-words pr-2">Patokan waktu menghitung lembur</p>
                             </div>
                             <input type="time" id="setting-end-time" onchange="window.saveSettingsEvent()" class="bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl px-2 py-2 text-sm font-semibold text-stone-700 dark:text-stone-200 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all flex-shrink-0 w-[110px] text-center shadow-sm">
                         </div>
 
                         <div class="flex items-center justify-between border-b border-stone-100 dark:border-stone-700 pb-6 gap-4">
-                            <h3 class="font-semibold text-stone-700 dark:text-stone-200 text-sm truncate" data-i18n="theme">Tema</h3>
+                            <h3 id="set-theme-label" class="font-semibold text-stone-700 dark:text-stone-200 text-sm truncate">Tema</h3>
                             <select id="setting-theme" onchange="window.saveSettingsEvent()" class="bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl px-3 py-2 text-sm font-semibold text-stone-700 dark:text-stone-200 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all shadow-sm cursor-pointer w-[110px] text-center">
-                                <option value="system" data-i18n="system">System</option>
-                                <option value="light" data-i18n="light">Terang</option>
-                                <option value="dark" data-i18n="dark">Gelap</option>
+                                <option value="system" id="opt-theme-sys">Sistem</option>
+                                <option value="light" id="opt-theme-light">Terang</option>
+                                <option value="dark" id="opt-theme-dark">Gelap</option>
                             </select>
                         </div>
 
+                        <!-- Pengaturan Bahasa -->
                         <div class="flex items-center justify-between pb-2 gap-4">
-                            <h3 class="font-semibold text-stone-700 dark:text-stone-200 text-sm truncate" data-i18n="language">Bahasa</h3>
-                            <select id="setting-language" onchange="window.saveSettingsEvent()" class="bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl px-3 py-2 text-sm font-semibold text-stone-700 dark:text-stone-200 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all shadow-sm cursor-pointer w-[110px] text-center">
-                                <option value="id" data-i18n="indonesian">Indonesia</option>
-                                <option value="en" data-i18n="english">English</option>
+                            <h3 id="set-lang-label" class="font-semibold text-stone-700 dark:text-stone-200 text-sm truncate">Bahasa</h3>
+                            <select id="setting-lang" onchange="window.saveSettingsEvent()" class="bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl px-3 py-2 text-sm font-semibold text-stone-700 dark:text-stone-200 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all shadow-sm cursor-pointer w-[110px] text-center">
+                                <option value="id">Indonesia</option>
+                                <option value="ja">日本語</option>
                             </select>
                         </div>
                     </div>
@@ -211,46 +207,48 @@
 
         </main>
 
-        <nav class="absolute bottom-0 w-full bg-white/95 dark:bg-stone-900/95 backdrop-blur-xl border-t border-stone-200/50 dark:border-stone-800/50 flex justify-around p-2 z-30 flex-shrink-0 safe-pb">
-            <button onclick="window.switchTab('tab-home')" id="nav-tab-home" class="nav-btn flex-1 flex flex-col items-center p-2 text-teal-600 dark:text-teal-400 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95">
+        <!-- Navigasi Bawah -->
+        <nav class="absolute bottom-0 w-full bg-white/95 dark:bg-stone-900/95 backdrop-blur-xl border-t border-stone-200/50 dark:border-stone-800/50 flex justify-around z-30 flex-shrink-0 safe-pb">
+            <button onclick="window.switchTab('tab-home')" id="nav-tab-home" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-teal-600 dark:text-teal-400 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95">
                 <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                <span class="text-[10px] font-bold">Home</span>
+                <span id="nav-lbl-home" class="text-[10px] font-bold">Home</span>
             </button>
-            <button onclick="window.switchTab('tab-lembur')" id="nav-tab-lembur" class="nav-btn flex-1 flex flex-col items-center p-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95">
+            <button onclick="window.switchTab('tab-lembur')" id="nav-tab-lembur" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95">
                 <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span class="text-[10px] font-bold" data-i18n="nav_lembur">Lembur</span>
+                <span id="nav-lbl-lembur" class="text-[10px] font-bold">Lembur</span>
             </button>
-            <button onclick="window.switchTab('tab-calendar')" id="nav-tab-calendar" class="nav-btn flex-1 flex flex-col items-center p-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95">
+            <button onclick="window.switchTab('tab-calendar')" id="nav-tab-calendar" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95">
                 <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                <span class="text-[10px] font-bold" data-i18n="nav_calendar">Kalender</span>
+                <span id="nav-lbl-calendar" class="text-[10px] font-bold">Kalender</span>
             </button>
-            <button onclick="window.switchTab('tab-settings')" id="nav-tab-settings" class="nav-btn flex-1 flex flex-col items-center p-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95">
+            <button onclick="window.switchTab('tab-settings')" id="nav-tab-settings" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95">
                 <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span class="text-[10px] font-bold" data-i18n="nav_settings">Pengaturan</span>
+                <span id="nav-lbl-settings" class="text-[10px] font-bold">Pengaturan</span>
             </button>
         </nav>
         
+        <!-- Shift Bubble -->
         <div id="shift-bubble" class="absolute z-[60] bg-white dark:bg-stone-800 rounded-3xl shadow-[0_15px_50px_rgba(0,0,0,0.2)] border border-stone-200 dark:border-stone-700 p-5 w-[280px] max-w-[90vw] transition-all duration-300 opacity-0 invisible scale-95 origin-center">
             <div id="bubble-tail" class="absolute w-4 h-4 bg-white dark:bg-stone-800 transform -translate-x-1/2 rotate-45 rounded-sm"></div>
             <div class="relative z-10 flex flex-col items-center">
-                <p class="text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-1" data-i18n="custom_shift">Shift Khusus</p>
+                <p id="bubble-title-label" class="text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-1">Shift Khusus</p>
                 <p id="bubble-date-label" class="text-base font-bold text-stone-700 dark:text-stone-200 mb-4 border-b border-stone-100 dark:border-stone-700 pb-3 w-full text-center">12 Sep 2026</p>
                 <div class="w-full mb-4">
-                    <label class="text-[10px] font-bold text-stone-500 block mb-1.5 uppercase tracking-wider">Jam Masuk</label>
+                    <label id="bubble-start-label" class="text-[10px] font-bold text-stone-500 block mb-1.5 uppercase tracking-wider">Jam Masuk</label>
                     <input type="time" id="bubble-start-time" onchange="window.updateBubbleEndTime()" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl px-3 py-2.5 text-sm font-semibold text-stone-700 dark:text-stone-200 outline-none focus:border-teal-500 focus:ring-1 transition-all">
                 </div>
                 <div class="w-full mb-5 bg-teal-50 dark:bg-teal-900/30 rounded-xl p-3 border border-teal-100 dark:border-teal-800 text-center shadow-inner">
-                    <p class="text-[10px] font-medium text-teal-600 dark:text-teal-400 block mb-1">Jam Pulang (Masuk + 9 Jam):</p>
+                    <p id="bubble-end-label" class="text-[10px] font-medium text-teal-600 dark:text-teal-400 block mb-1">Jam Pulang (Masuk + 9 Jam):</p>
                     <p id="bubble-end-time" class="text-xl font-extrabold text-teal-700 dark:text-teal-300">-</p>
                 </div>
                 <div class="flex gap-3 w-full">
-                    <button id="btn-save-shift" class="flex-1 bg-teal-500 text-white rounded-xl py-3 text-xs font-bold shadow-[0_4px_12px_rgba(20,184,166,0.3)] hover:bg-teal-400 active:scale-95 transition-all" data-i18n="save_changes">Simpan</button>
-                    <button id="btn-delete-shift" class="flex-1 bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 rounded-xl py-3 text-xs font-bold hover:bg-rose-200 dark:hover:bg-rose-900/50 active:scale-95 transition-all shadow-sm hidden" data-i18n="delete">Hapus</button>
+                    <button id="btn-save-shift" class="flex-1 bg-teal-500 text-white rounded-xl py-3 text-xs font-bold shadow-[0_4px_12px_rgba(20,184,166,0.3)] hover:bg-teal-400 active:scale-95 transition-all">Simpan</button>
+                    <button id="btn-delete-shift" class="flex-1 bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 rounded-xl py-3 text-xs font-bold hover:bg-rose-200 dark:hover:bg-rose-900/50 active:scale-95 transition-all shadow-sm hidden">Hapus</button>
                 </div>
             </div>
         </div>
 
-        <!-- Custom Modal untuk Alert / Confirm -->
+        <!-- Custom Modal -->
         <div id="custom-modal" class="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
             <div class="bg-white dark:bg-stone-800 rounded-3xl p-6 shadow-xl w-[300px] max-w-[90vw] transform scale-95 transition-transform duration-300">
                 <h3 id="modal-title" class="text-lg font-bold text-stone-800 dark:text-white mb-2">Peringatan</h3>
@@ -266,7 +264,6 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Murni konfigurasi asli Anda (tanpa override)
         const firebaseConfig = {
             apiKey: "AIzaSyDW4v73HwelLT9No71Hf-Mv1o_fahRPCe8",
             authDomain: "personal-everyday-app.firebaseapp.com",
@@ -280,13 +277,13 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Murni App ID asli Anda
         const appIdString = "libur-lembur-tracker-v1";
         let userId = null;
 
-        // STATE (HANYA MEMORI)
-        let selectedDates = [];
+        let selectedDates = []; 
+        let yukyuDates = []; 
         let originalDates = [];
+        let originalYukyuDates = [];
         let isEditMode = false;
         
         let appSettings = {
@@ -302,42 +299,111 @@
         let activeBubbleDate = null;
         let isInitialized = false;
 
+        // Kamus Terjemahan Bahasa (ID & JA)
         const i18n = {
-            'id': {
-                app_title: 'Libur & Lembur', exciting_news: 'Berita Seru!', long_holiday: 'Libur panjang sudah dekat!',
-                holiday_today: 'Libur', countdown_holiday: 'Sisa {hrs}:{mins}:{secs}',
-                next_holiday: 'Libur Berikutnya', work_days: 'Hari Kerja', not_set: 'Belum di-set', towards_next: 'Menuju Libur Berikutnya',
-                date: 'Tanggal', calendar_distance: 'Jarak Kalender', days: 'Hari', no_holiday: 'Belum Ada Libur',
-                setup_holiday: 'Tandai kalender untuk mulai menghitung mundur.', open_calendar: 'Buka Kalender',
-                manage_holiday: 'Atur Hari Libur', edit_calendar: 'Edit', save_changes: 'Simpan', cancel: 'Batal',
-                overtime_title: 'Buku Lembur', actual_end_time: 'Jam Pulang', calc_overtime: 'Simpan',
-                total_this_month: 'Total Bulan Ini', settings_title: 'Pengaturan', regular_end_time: 'Jam Pulang Reguler',
-                regular_end_time_desc: 'Patokan waktu menghitung lembur',
-                theme: 'Tema', light: 'Terang', dark: 'Gelap', system: 'Sistem', language: 'Bahasa', indonesian: 'Indonesia',
-                english: 'English', days_header: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'], hours: 'Jam', mins: 'Mnt',
-                nav_calendar: 'Kalender', nav_settings: 'Pengaturan', nav_lembur: 'Lembur', history_title: 'Riwayat Bulan Ini', empty_log: 'Belum ada catatan lembur bulan ini.',
-                double_tap_info: 'Sentuh tanggal 2x untuk set shift khusus.', custom_shift: 'Shift Khusus', delete: 'Hapus', saving: 'Menyimpan...', loading_data: 'Sinkronisasi...'
+            id: {
+                appName: "Libur & Lembur",
+                newsHeader: "Berita Seru!",
+                newsDesc: "Libur panjang sudah dekat!",
+                holidayTitle: "Libur",
+                overtimeLabel: "Lembur",
+                salaryLabel: "Est. Gaji",
+                nextHolidayLabel: "Libur Berikutnya",
+                nextHolidayHeading: "Menuju Libur Berikutnya",
+                workdayLabel: "Hari Kerja",
+                distanceDays: "Hari Jarak",
+                timeLeftLabel: "Sisa Waktu Kerja",
+                overtimeActiveLabel: "Lembur Berjalan",
+                noHolidayHeading: "Belum Ada Libur",
+                noHolidayDesc: "Tandai kalender untuk mulai menghitung mundur.",
+                lemburTitle: "Buku Lembur",
+                lemburMonthly: "Total Bulan Ini",
+                lemburDate: "Tanggal",
+                lemburTime: "Jam Pulang",
+                lemburSave: "Simpan",
+                lemburHistory: "Riwayat Bulan Ini",
+                calTitle: "Atur Kalender",
+                calHint: "Tap 2x pada tanggal untuk set shift khusus.",
+                calEdit: "Edit",
+                calSave: "Simpan",
+                calCancel: "Batal",
+                days: ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"],
+                settingsTitle: "Pengaturan",
+                setEndtime: "Jam Pulang Reguler",
+                setEndtimeDesc: "Patokan waktu menghitung lembur",
+                setTheme: "Tema",
+                optSys: "Sistem",
+                optLight: "Terang",
+                optDark: "Gelap",
+                setLang: "Bahasa",
+                navHome: "Home",
+                navLembur: "Lembur",
+                navCalendar: "Kalender",
+                navSettings: "Pengaturan",
+                bubbleTitle: "Shift Khusus",
+                bubbleStart: "Jam Masuk",
+                bubbleEnd: "Jam Pulang (Masuk + 9 Jam):",
+                btnSave: "Simpan",
+                btnDelete: "Hapus",
+                modalWarn: "Peringatan",
+                noLogs: "Belum ada catatan lembur bulan ini."
             },
-            'en': {
-                app_title: 'Off & Overtime', exciting_news: 'Exciting News!', long_holiday: 'Long weekend approaching!',
-                holiday_today: 'Holiday', countdown_holiday: '{hrs}:{mins}:{secs} Remaining',
-                next_holiday: 'Next Holiday', work_days: 'Work Days', not_set: 'Not Set', towards_next: 'Towards Next Holiday',
-                date: 'Date', calendar_distance: 'Calendar Distance', days: 'Days', no_holiday: 'No Holidays Set',
-                setup_holiday: 'Mark your calendar to start the countdown.', open_calendar: 'Open Calendar',
-                manage_holiday: 'Manage Holidays', edit_calendar: 'Edit', save_changes: 'Save', cancel: 'Cancel',
-                overtime_title: 'Overtime Logbook', actual_end_time: 'End Time', calc_overtime: 'Save',
-                total_this_month: 'Total This Month', settings_title: 'Settings', regular_end_time: 'Regular End Time',
-                regular_end_time_desc: 'Baseline time to calculate overtime',
-                theme: 'Theme', light: 'Light', dark: 'Dark', system: 'System', language: 'Language', indonesian: 'Indonesian',
-                english: 'English', days_header: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], hours: 'Hrs', mins: 'Mins',
-                nav_calendar: 'Calendar', nav_settings: 'Settings', nav_lembur: 'Overtime', history_title: 'History This Month', empty_log: 'No overtime logged this month.',
-                double_tap_info: 'Double-tap a date to set custom work shift.', custom_shift: 'Custom Shift', delete: 'Delete', saving: 'Saving...', loading_data: 'Syncing...'
+            ja: {
+                appName: "休日・残業トラッカー",
+                newsHeader: "お知らせ！",
+                newsDesc: "大型連休が近づいています！",
+                holidayTitle: "休日",
+                overtimeLabel: "残業",
+                salaryLabel: "予想給与",
+                nextHolidayLabel: "次の休日",
+                nextHolidayHeading: "次の休日まで",
+                workdayLabel: "出勤日",
+                distanceDays: "日後",
+                timeLeftLabel: "定時までの残り",
+                overtimeActiveLabel: "残業時間",
+                noHolidayHeading: "休日未設定",
+                noHolidayDesc: "カレンダーで休日をマークしてください。",
+                lemburTitle: "残業帳",
+                lemburMonthly: "今月の合計",
+                lemburDate: "日付",
+                lemburTime: "退勤時刻",
+                lemburSave: "保存",
+                lemburHistory: "今月の履歴",
+                calTitle: "カレンダー設定",
+                calHint: "日付をダブルタップしてシフトを設定。",
+                calEdit: "編集",
+                calSave: "保存",
+                calCancel: "キャンセル",
+                days: ["月", "火", "水", "木", "金", "土", "日"],
+                settingsTitle: "設定",
+                setEndtime: "定時（退勤時刻）",
+                setEndtimeDesc: "残業計算の基準時間",
+                setTheme: "テーマ",
+                optSys: "システム",
+                optLight: "ライト",
+                optDark: "ダーク",
+                setLang: "言語",
+                navHome: "ホーム",
+                navLembur: "残業",
+                navCalendar: "カレンダー",
+                navSettings: "設定",
+                bubbleTitle: "特別シフト",
+                bubbleStart: "出勤時刻",
+                bubbleEnd: "退勤時刻 (出勤 + 9時間):",
+                btnSave: "保存",
+                btnDelete: "削除",
+                modalWarn: "警告",
+                noLogs: "今月の残業記録はありません。"
             }
         };
 
         function t(key) {
             const lang = appSettings.language || 'id';
-            return i18n[lang][key] || key;
+            return i18n[lang][key] || i18n['id'][key] || key;
+        }
+
+        function formatYen(amount) {
+            return new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(amount);
         }
 
         function showModal(title, message, isConfirm, onConfirm) {
@@ -351,12 +417,12 @@
             if (isConfirm) {
                 const cancelBtn = document.createElement('button');
                 cancelBtn.className = "px-4 py-2 rounded-xl text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-700 dark:text-stone-300 hover:bg-stone-200 transition-colors";
-                cancelBtn.innerText = t('cancel');
+                cancelBtn.innerText = t('calCancel');
                 cancelBtn.onclick = () => closeModal();
                 
                 const confirmBtn = document.createElement('button');
                 confirmBtn.className = "px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-500 hover:bg-rose-400 shadow-md transition-colors";
-                confirmBtn.innerText = "Yakin";
+                confirmBtn.innerText = "OK";
                 confirmBtn.onclick = () => { closeModal(); if(onConfirm) onConfirm(); };
                 
                 btnContainer.appendChild(cancelBtn);
@@ -397,24 +463,21 @@
                 await setDoc(userRef, { 
                     settings: appSettings, 
                     holidays: selectedDates,
+                    yukyu: yukyuDates,
                     lastSync: new Date().toISOString()
                 });
             } catch(e) {
                 console.error("Firebase background sync failed:", e);
-                showModal("Akses Ditolak Firebase", "Pesan: " + e.message + "\n\nPastikan aturan Firestore Rules (Security Rules) mengizinkan penulisan.", false);
             }
         }
 
         async function syncWithLoading(uiUpdateCallback) {
             const overlay = document.getElementById('loading-overlay');
-            document.getElementById('loading-text').innerText = t('saving');
-            
             overlay.classList.remove('hidden');
             await new Promise(r => setTimeout(r, 10)); 
             overlay.classList.add('opacity-100');
 
             if(uiUpdateCallback) uiUpdateCallback(); 
-
             await syncToFirebaseBackground();
 
             overlay.classList.remove('opacity-100');
@@ -422,13 +485,56 @@
             overlay.classList.add('hidden');
         }
 
+        function updateStaticTexts() {
+            document.getElementById('app-header-title').innerText = t('appName');
+            document.getElementById('news-header-label').innerText = t('newsHeader');
+            document.getElementById('news-desc-label').innerText = t('newsDesc');
+            
+            document.getElementById('lembur-title').innerText = t('lemburTitle');
+            document.getElementById('lembur-monthly-label').innerText = t('lemburMonthly');
+            document.getElementById('lembur-date-label').innerText = t('lemburDate');
+            document.getElementById('lembur-time-label').innerText = t('lemburTime');
+            document.getElementById('lembur-save-btn').innerText = t('lemburSave');
+            document.getElementById('lembur-history-label').innerText = t('lemburHistory');
+            
+            document.getElementById('cal-main-title').innerText = t('calTitle');
+            if(!isEditMode) {
+                document.getElementById('calendar-hint').innerText = t('calHint');
+            }
+            
+            document.getElementById('settings-title').innerText = t('settingsTitle');
+            document.getElementById('set-endtime-label').innerText = t('setEndtime');
+            document.getElementById('set-endtime-desc').innerText = t('setEndtimeDesc');
+            document.getElementById('set-theme-label').innerText = t('setTheme');
+            document.getElementById('opt-theme-sys').innerText = t('optSys');
+            document.getElementById('opt-theme-light').innerText = t('optLight');
+            document.getElementById('opt-theme-dark').innerText = t('optDark');
+            document.getElementById('set-lang-label').innerText = t('setLang');
+            
+            document.getElementById('nav-lbl-home').innerText = t('navHome');
+            document.getElementById('nav-lbl-lembur').innerText = t('navLembur');
+            document.getElementById('nav-lbl-calendar').innerText = t('navCalendar');
+            document.getElementById('nav-lbl-settings').innerText = t('navSettings');
+            
+            document.getElementById('bubble-title-label').innerText = t('bubbleTitle');
+            document.getElementById('bubble-start-label').innerText = t('bubbleStart');
+            document.getElementById('bubble-end-label').innerText = t('bubbleEnd');
+            document.getElementById('btn-save-shift').innerText = t('btnSave');
+            document.getElementById('btn-delete-shift').innerText = t('btnDelete');
+
+            // Render Hari Kalender
+            const daysContainer = document.getElementById('calendar-days-header');
+            const dayNames = t('days');
+            daysContainer.innerHTML = dayNames.map(d => `<div>${d}</div>`).join('');
+        }
+
         function initUI() {
             applyTheme();
-            applyLanguage();
+            updateStaticTexts();
             
             document.getElementById('setting-end-time').value = appSettings.endTime;
             document.getElementById('setting-theme').value = appSettings.theme;
-            document.getElementById('setting-language').value = appSettings.language;
+            document.getElementById('setting-lang').value = appSettings.language || 'id';
             document.getElementById('reg-time-display').innerText = `Reg: ${appSettings.endTime}`;
             
             updateDashboard();
@@ -454,7 +560,6 @@
         window.onload = async () => {
             const overlay = document.getElementById('loading-overlay');
             document.getElementById('loading-text').innerText = 'Menyinkronkan Data...';
-            
             overlay.classList.remove('hidden');
             setTimeout(() => overlay.classList.add('opacity-100'), 10);
 
@@ -471,11 +576,13 @@
                             appSettings = { ...appSettings, ...cloudData.settings };
                             if(!appSettings.overtimeLogs) appSettings.overtimeLogs = {};
                             if(!appSettings.customShifts) appSettings.customShifts = {};
+                            if(!appSettings.language) appSettings.language = 'id';
                         }
-                        if (cloudData.holidays) {
-                            selectedDates = cloudData.holidays;
-                            originalDates = [...selectedDates];
-                        }
+                        if (cloudData.holidays) selectedDates = cloudData.holidays;
+                        if (cloudData.yukyu) yukyuDates = cloudData.yukyu;
+                        
+                        originalDates = [...selectedDates];
+                        originalYukyuDates = [...yukyuDates];
                     }
                     
                     initUI();
@@ -483,19 +590,14 @@
                     overlay.classList.remove('opacity-100');
                     setTimeout(() => overlay.classList.add('hidden'), 300);
                 }, (error) => {
-                    console.error("Firebase Realtime Error:", error);
-                    showModal("Koneksi Firebase Ditolak", "Pesan: " + error.message + "\n\nPastikan Rules Firestore mengizinkan read/write.", false);
+                    console.error("Firebase Error:", error);
                     initUI();
-                    
                     overlay.classList.remove('opacity-100');
                     setTimeout(() => overlay.classList.add('hidden'), 300);
                 });
 
             } catch(e) {
-                console.error("Firebase Load Error:", e);
-                showModal("Koneksi Firebase Gagal", "Pesan Error: " + e.message, false);
                 initUI();
-                
                 overlay.classList.remove('opacity-100');
                 setTimeout(() => overlay.classList.add('hidden'), 300);
             }
@@ -504,16 +606,14 @@
         window.saveSettingsEvent = function() {
             appSettings.endTime = document.getElementById('setting-end-time').value || '17:00';
             appSettings.theme = document.getElementById('setting-theme').value;
-            
-            const newLang = document.getElementById('setting-language').value;
-            const langChanged = newLang !== appSettings.language;
-            appSettings.language = newLang;
+            appSettings.language = document.getElementById('setting-lang').value;
             
             document.getElementById('reg-time-display').innerText = `Reg: ${appSettings.endTime}`;
             
             applyTheme();
-            if (langChanged) applyLanguage();
+            updateStaticTexts();
             updateDashboard();
+            renderCalendar();
             renderOvertimeLogs();
             window.updateShiftIndicator();
 
@@ -530,20 +630,6 @@
             else document.documentElement.classList.remove('dark');
         }
 
-        function applyLanguage() {
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (el.tagName === 'OPTION' || el.tagName === 'SPAN' || el.tagName === 'H1' || el.tagName === 'H2' || el.tagName === 'H3' || el.tagName === 'H4' || el.tagName === 'P' || el.tagName === 'LABEL' || el.tagName === 'BUTTON') {
-                    if(el.children.length === 0) el.innerText = t(key);
-                }
-            });
-            
-            const headerHtml = t('days_header').map(day => `<div>${day}</div>`).join('');
-            document.getElementById('calendar-days-header').innerHTML = headerHtml;
-            renderCalendar(); 
-            renderOvertimeLogs(); 
-        }
-
         function toYYYYMMDD(dateObj) {
             const y = dateObj.getFullYear();
             const m = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -555,7 +641,8 @@
             const today = new Date();
             today.setHours(0,0,0,0);
             const todayStr = toYYYYMMDD(today);
-            const isHolidayToday = selectedDates.includes(todayStr);
+            
+            const isHolidayToday = selectedDates.includes(todayStr) || yukyuDates.includes(todayStr);
 
             let workingDaysLeft = 0;
             let calendarDaysLeft = 0;
@@ -563,7 +650,7 @@
             let checkDate = new Date(today);
 
             if (isHolidayToday) {
-                while (selectedDates.includes(toYYYYMMDD(checkDate))) {
+                while (selectedDates.includes(toYYYYMMDD(checkDate)) || yukyuDates.includes(toYYYYMMDD(checkDate))) {
                     checkDate.setDate(checkDate.getDate() + 1);
                 }
             }
@@ -571,7 +658,7 @@
             let tempDate = new Date(checkDate);
             while (calendarDaysLeft < 365) { 
                 const dStr = toYYYYMMDD(tempDate);
-                if (selectedDates.includes(dStr)) {
+                if (selectedDates.includes(dStr) || yukyuDates.includes(dStr)) {
                     nextHolidayStr = dStr;
                     break;
                 } else {
@@ -584,21 +671,20 @@
             let totalCalendarDays = 0;
             if (nextHolidayStr) {
                 const nextHDate = new Date(nextHolidayStr);
-                const diffTime = nextHDate - today;
-                totalCalendarDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                totalCalendarDays = Math.ceil((nextHDate - today) / (1000 * 60 * 60 * 24));
             }
 
-            return { isHolidayToday, workingDaysLeft, calendarDaysLeft: totalCalendarDays, nextHolidayStr };
+            return { isHolidayToday, workingDaysLeft, totalCalendarDays, nextHolidayStr };
         }
 
         window.updateWorkdayCountdown = function() {
             const shiftText = document.getElementById('shift-countdown-text');
-            if (!shiftText) return;
+            const labelText = document.getElementById('shift-countdown-label');
+            if (!shiftText || !labelText) return;
 
             const now = new Date();
             const todayStr = toYYYYMMDD(now);
             
-            // Cari acuan jam pulang, pakai custom shift jika ada
             let baselineTime = appSettings.endTime;
             if (appSettings.customShifts[todayStr]) baselineTime = appSettings.customShifts[todayStr];
             
@@ -608,20 +694,22 @@
             const diffMs = endOfShift - now;
             
             if (diffMs > 0) {
-                // Sisa waktu bekerja (belum lembur)
                 const h = Math.floor(diffMs / (1000 * 60 * 60));
                 const m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
                 const s = Math.floor((diffMs % (1000 * 60)) / 1000);
-                shiftText.innerText = `Sisa ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                shiftText.className = "text-stone-600 dark:text-stone-300 font-mono font-bold text-lg leading-tight whitespace-nowrap";
+                
+                labelText.innerText = t('timeLeftLabel');
+                shiftText.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                shiftText.className = "text-3xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm";
             } else {
-                // Lembur dimulai! Teks berubah jadi merah berkedip
                 const overMs = Math.abs(diffMs);
                 const h = Math.floor(overMs / (1000 * 60 * 60));
                 const m = Math.floor((overMs % (1000 * 60 * 60)) / (1000 * 60));
                 const s = Math.floor((overMs % (1000 * 60)) / 1000);
+                
+                labelText.innerText = t('overtimeActiveLabel');
                 shiftText.innerText = `+${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                shiftText.className = "text-rose-500 font-mono font-bold text-lg leading-tight whitespace-nowrap animate-pulse";
+                shiftText.className = "text-3xl font-mono font-bold text-rose-500 animate-pulse-fast tabular-nums tracking-tighter drop-shadow-sm";
             }
         }
 
@@ -633,7 +721,6 @@
             const status = calculateStatus();
             if (progressInterval) clearInterval(progressInterval);
 
-            // Hitung total lembur bulan ini
             const today = new Date();
             const currentYearMonth = toYYYYMMDD(today).substring(0, 7); 
             let totalMinsThisMonth = 0;
@@ -644,106 +731,121 @@
             }
             const otHours = Math.floor(totalMinsThisMonth / 60);
             const otMins = totalMinsThisMonth % 60;
-            const otTextStr = `${otHours > 0 ? otHours + ' ' + t('hours') : ''} ${otMins > 0 ? otMins + ' ' + t('mins') : ''}`.trim() || `0 ${t('hours')}`;
+            const otTextStr = `${otHours > 0 ? otHours + 'j' : ''} ${otMins > 0 ? otMins + 'm' : ''}`.trim() || `0 j`;
             
-            let nextHolidayText = t('not_set');
+            const holidaysThisMonth = selectedDates.filter(d => d.startsWith(currentYearMonth)).length;
+            const baseSalary = 120000 + ((9 - holidaysThisMonth) * 10000);
+            const overtimeSalary = (totalMinsThisMonth / 60) * 1000;
+            const totalSalary = Math.round(baseSalary + overtimeSalary);
+            const formattedSalary = formatYen(totalSalary);
+
+            let nextHolidayText = 'Belum Ada';
             if(status.nextHolidayStr) {
-                const localeStr = appSettings.language === 'id' ? 'id-ID' : 'en-US';
-                const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+                const localeStr = appSettings.language === 'ja' ? 'ja-JP' : 'id-ID';
+                const options = { weekday: 'long', day: 'numeric', month: 'long' };
                 nextHolidayText = new Date(status.nextHolidayStr).toLocaleDateString(localeStr, options);
             }
 
             if (status.isHolidayToday) {
                 card.className = "rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden holiday-card-bg border-none min-h-[460px] h-full flex flex-col items-center justify-center shadow-lg";
                 content.innerHTML = `
-                    <div class="flex flex-col items-center justify-center text-center w-full my-auto">
-                        <div class="text-7xl animate-sun mb-4 drop-shadow-sm select-none pointer-events-none opacity-0 animate-fade-in-up" style="animation-delay: 0.1s;">🔆</div>
-                        <h2 class="text-4xl font-extrabold text-orange-900 dark:text-orange-100 tracking-tight drop-shadow-sm mb-6 opacity-0 animate-fade-in-up" style="animation-delay: 0.2s;">${t('holiday_today')}</h2>
-                        
-                        <div class="w-full max-w-[80%] opacity-0 animate-fade-in-up" style="animation-delay: 0.3s;">
-                            <div class="h-1.5 w-full bg-black/10 dark:bg-white/10 rounded-full overflow-hidden relative">
-                                <div id="holiday-progress" class="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 w-0 bg-emerald-500 shadow-sm"></div>
-                            </div>
-                            <div id="holiday-footnote" class="text-xs font-mono font-bold mt-3 text-center tracking-wide break-words text-emerald-700 dark:text-emerald-300">...</div>
+                    <div class="text-7xl animate-sun mb-4 drop-shadow-sm select-none opacity-0 animate-[fadeInUp_0.6s_ease-out_0.1s_forwards]">🔆</div>
+                    <h2 class="text-4xl font-extrabold text-orange-900 dark:text-orange-100 tracking-tight drop-shadow-sm mb-6 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards]">${t('holidayTitle')}</h2>
+                    
+                    <div class="w-full max-w-[80%] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]">
+                        <div class="h-1.5 w-full bg-black/10 dark:bg-white/10 rounded-full overflow-hidden relative">
+                            <div id="holiday-progress" class="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 w-0 bg-emerald-500 shadow-sm"></div>
                         </div>
+                        <div id="holiday-footnote" class="text-xs font-mono font-bold mt-3 text-center tracking-wide break-words text-emerald-700 dark:text-emerald-300">...</div>
+                    </div>
 
-                        <div class="mt-12 flex flex-col space-y-8 w-full opacity-0 animate-fade-in-up" style="animation-delay: 0.4s;">
-                            <div>
-                                <p class="text-[10px] text-orange-800/70 dark:text-orange-200/70 font-bold uppercase tracking-widest mb-1.5">Lembur Bulan Ini</p>
-                                <p class="text-orange-900 dark:text-orange-100 font-black text-2xl">${otTextStr}</p>
+                    <div class="mt-12 flex flex-col items-center space-y-6 w-full opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
+                        <div class="flex justify-around w-full max-w-[280px]">
+                            <div class="text-center">
+                                <p class="text-[10px] text-orange-800/70 dark:text-orange-200/70 font-bold uppercase tracking-widest mb-1">${t('overtimeLabel')}</p>
+                                <p class="text-orange-900 dark:text-orange-100 font-black text-xl">${otTextStr}</p>
                             </div>
-                            
-                            <div>
-                                <p class="text-[10px] text-orange-800/70 dark:text-orange-200/70 font-bold uppercase tracking-widest mb-1.5">${t('next_holiday')}</p>
-                                ${status.nextHolidayStr ? 
-                                    `<p class="text-orange-900 dark:text-orange-100 font-bold text-lg">${nextHolidayText}</p>`
-                                    : `<p class="text-orange-900 dark:text-orange-100 text-sm font-medium">${t('not_set')}</p>`
-                                }
+                            <div class="text-center border-l border-orange-900/10 dark:border-orange-100/10 pl-6">
+                                <p class="text-[10px] text-orange-800/70 dark:text-orange-200/70 font-bold uppercase tracking-widest mb-1">${t('salaryLabel')}</p>
+                                <p class="text-orange-900 dark:text-orange-100 font-black text-xl">${formattedSalary}</p>
                             </div>
+                        </div>
+                        
+                        <div class="text-center bg-white/20 dark:bg-black/20 px-6 py-3 rounded-2xl w-full max-w-[280px] shadow-sm">
+                            <p class="text-[9px] text-orange-800/70 dark:text-orange-200/70 font-bold uppercase tracking-widest mb-1">${t('nextHolidayLabel')}</p>
+                            <p class="text-orange-900 dark:text-orange-100 font-bold text-sm truncate">${nextHolidayText}</p>
+                            ${status.nextHolidayStr ? `<div class="mt-2 inline-block bg-orange-900/10 dark:bg-orange-100/10 px-2 py-0.5 rounded text-[10px] font-bold text-orange-800 dark:text-orange-200 border border-orange-900/5 dark:border-orange-100/5 shadow-sm">Jarak: ${status.workingDaysLeft} ${t('workdayLabel')}</div>` : ''}
                         </div>
                     </div>
                 `;
                 updateProgressBar();
-                // Tick setiap 1 detik
                 progressInterval = setInterval(updateProgressBar, 1000); 
             } else {
                 card.className = "rounded-[2rem] p-8 transition-all duration-500 relative overflow-hidden bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700 shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-h-[460px] h-full flex flex-col items-center justify-center";
+                
                 if (status.nextHolidayStr) {
                     content.innerHTML = `
-                        <div class="flex flex-col items-center justify-center text-center w-full my-auto">
-                            <h2 class="text-stone-400 dark:text-stone-500 font-bold uppercase tracking-[0.3em] text-[10px] mb-4 opacity-0 animate-fade-in-up" style="animation-delay: 0.1s;">${t('towards_next')}</h2>
+                        <h2 class="text-stone-400 dark:text-stone-500 font-bold uppercase tracking-[0.3em] text-[9px] mb-3 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.1s_forwards]">${t('nextHolidayHeading')}</h2>
+                        
+                        <div class="mb-1 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards] flex items-baseline justify-center gap-2">
+                            <span class="text-[7rem] leading-[1] font-black text-stone-800 dark:text-white tracking-tighter drop-shadow-sm">${status.workingDaysLeft}</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-center gap-3 mb-10 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]">
+                            <span class="text-stone-500 dark:text-stone-400 font-bold text-sm uppercase tracking-widest">${t('workdayLabel')}</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-stone-300 dark:bg-stone-600"></span>
+                            <span class="text-stone-400 dark:text-stone-500 font-semibold text-xs tracking-wide">${status.totalCalendarDays} ${t('distanceDays')}</span>
+                        </div>
+                        
+                        <div class="flex flex-col space-y-7 w-full max-w-[280px] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
                             
-                            <div class="mb-1 opacity-0 animate-fade-in-up" style="animation-delay: 0.2s;">
-                                <span class="text-[6rem] leading-[1] font-black text-stone-800 dark:text-white tracking-tighter">${status.workingDaysLeft}</span>
+                            <div class="text-center">
+                                <p id="shift-countdown-label" class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1.5 transition-colors">${t('timeLeftLabel')}</p>
+                                <p id="shift-countdown-text" class="text-3xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm">--:--:--</p>
                             </div>
-                            
-                            <div class="text-stone-500 dark:text-stone-400 font-bold text-sm mb-12 uppercase tracking-widest opacity-0 animate-fade-in-up" style="animation-delay: 0.3s;">${t('work_days')}</div>
-                            
-                            <div class="flex flex-col space-y-4 w-full opacity-0 animate-fade-in-up" style="animation-delay: 0.4s;">
-                                <div class="text-center mb-2">
-                                    <p class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1.5">${t('date')}</p>
-                                    <p class="text-stone-700 dark:text-stone-200 font-bold text-xl">${nextHolidayText}</p>
+
+                            <div class="grid grid-cols-2 gap-4 w-full">
+                                <div class="text-center">
+                                    <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">${t('overtimeLabel')}</p>
+                                    <p class="text-teal-600 dark:text-teal-400 font-black text-xl leading-tight truncate drop-shadow-sm">${otTextStr}</p>
                                 </div>
-                                
-                                <div class="grid grid-cols-2 gap-3 w-full">
-                                    <div class="bg-stone-50 dark:bg-stone-900/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-700/50 shadow-sm text-left flex flex-col justify-center overflow-hidden">
-                                        <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">Lembur Bln Ini</p>
-                                        <p class="text-teal-600 dark:text-teal-400 font-black text-lg leading-tight truncate">${otTextStr}</p>
-                                    </div>
-                                    <div class="bg-stone-50 dark:bg-stone-900/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-700/50 shadow-sm text-left flex flex-col justify-center overflow-hidden">
-                                        <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">Status Jam</p>
-                                        <p id="shift-countdown-text" class="text-stone-600 dark:text-stone-300 font-mono font-bold text-lg leading-tight truncate">--:--:--</p>
-                                    </div>
+                                <div class="text-center border-l border-stone-100 dark:border-stone-700">
+                                    <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">${t('salaryLabel')}</p>
+                                    <p class="text-teal-600 dark:text-teal-400 font-black text-xl leading-tight truncate drop-shadow-sm">${formattedSalary}</p>
                                 </div>
+                            </div>
+
+                            <div class="text-center pt-5 border-t border-stone-100 dark:border-stone-700">
+                                <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1.5">${t('nextHolidayLabel')}</p>
+                                <p class="text-stone-700 dark:text-stone-200 font-bold text-sm">${nextHolidayText}</p>
                             </div>
                         </div>
                     `;
                 } else {
                     content.innerHTML = `
-                        <div class="flex flex-col items-center justify-center text-center w-full my-auto">
-                            <div class="text-5xl select-none pointer-events-none mb-6 opacity-0 animate-fade-in-up" style="animation-delay: 0.1s;">📅</div>
-                            <h2 class="text-2xl font-black text-stone-800 dark:text-white mb-2 tracking-tight opacity-0 animate-fade-in-up" style="animation-delay: 0.2s;">${t('no_holiday')}</h2>
-                            <p class="text-sm text-stone-500 dark:text-stone-400 max-w-[220px] leading-relaxed break-words opacity-0 animate-fade-in-up" style="animation-delay: 0.3s;">${t('setup_holiday')}</p>
-                            
-                            <div class="mt-8 grid grid-cols-2 gap-3 w-full opacity-0 animate-fade-in-up" style="animation-delay: 0.4s;">
-                                <div class="bg-stone-50 dark:bg-stone-900/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-700/50 shadow-sm text-left flex flex-col justify-center overflow-hidden">
-                                    <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">Lembur Bln Ini</p>
-                                    <p class="text-teal-600 dark:text-teal-400 font-black text-lg leading-tight truncate">${otTextStr}</p>
-                                </div>
-                                <div class="bg-stone-50 dark:bg-stone-900/50 rounded-2xl p-4 border border-stone-100 dark:border-stone-700/50 shadow-sm text-left flex flex-col justify-center overflow-hidden">
-                                    <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">Status Jam</p>
-                                    <p id="shift-countdown-text" class="text-stone-600 dark:text-stone-300 font-mono font-bold text-lg leading-tight truncate">--:--:--</p>
-                                </div>
+                        <div class="text-5xl select-none pointer-events-none mb-6 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.1s_forwards]">📅</div>
+                        <h2 class="text-2xl font-black text-stone-800 dark:text-white mb-2 tracking-tight opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards]">${t('noHolidayHeading')}</h2>
+                        <p class="text-sm text-stone-500 dark:text-stone-400 max-w-[220px] leading-relaxed break-words opacity-0 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]">${t('noHolidayDesc')}</p>
+                        
+                        <div class="mt-8 grid grid-cols-2 gap-4 w-full max-w-[280px] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
+                            <div class="text-center">
+                                <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">${t('overtimeLabel')}</p>
+                                <p class="text-teal-600 dark:text-teal-400 font-black text-xl leading-tight truncate drop-shadow-sm">${otTextStr}</p>
                             </div>
+                            <div class="text-center border-l border-stone-100 dark:border-stone-700">
+                                <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">${t('salaryLabel')}</p>
+                                <p class="text-teal-600 dark:text-teal-400 font-black text-xl leading-tight truncate drop-shadow-sm">${formattedSalary}</p>
+                            </div>
+                        </div>
 
-                            <button onclick="window.switchTab('tab-calendar')" class="mt-8 px-8 py-3 bg-teal-50 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-full text-sm font-bold hover:bg-teal-100 dark:hover:bg-teal-900/60 active:scale-95 transition-all shadow-sm outline-none focus:outline-none opacity-0 animate-fade-in-up" style="animation-delay: 0.5s;">${t('open_calendar')}</button>
+                        <div class="mt-8 w-full opacity-0 animate-[fadeInUp_0.6s_ease-out_0.45s_forwards]">
+                            <p id="shift-countdown-label" class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1.5 transition-colors">${t('timeLeftLabel')}</p>
+                            <p id="shift-countdown-text" class="text-3xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm">--:--:--</p>
                         </div>
                     `;
                 }
                 
-                // Panggil segera sebelum interval
                 window.updateWorkdayCountdown();
-                // Tick setiap 1 detik
                 progressInterval = setInterval(window.updateWorkdayCountdown, 1000); 
             }
         }
@@ -768,7 +870,6 @@
 
             bar.className = `absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ${colorClass}`;
             
-            // Hitung Jam, Menit, Detik
             const remainingMs = totalMs - elapsedMs;
             const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
             const remainingMins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -776,12 +877,8 @@
             
             footnote.className = `text-xs font-mono font-bold mt-3 text-center tracking-wide break-words transition-colors duration-1000 ${textColor}`;
             
-            let txt = t('countdown_holiday');
-            txt = txt.replace('{hrs}', String(remainingHours).padStart(2, '0'));
-            txt = txt.replace('{mins}', String(remainingMins).padStart(2, '0'));
-            txt = txt.replace('{secs}', String(remainingSecs).padStart(2, '0'));
-            
-            footnote.innerText = txt;
+            const remText = appSettings.language === 'ja' ? '残り' : 'Sisa';
+            footnote.innerText = `${remText} ${String(remainingHours).padStart(2, '0')}:${String(remainingMins).padStart(2, '0')}:${String(remainingSecs).padStart(2, '0')}`;
         }
 
         window.updateShiftIndicator = function() {
@@ -842,10 +939,7 @@
         window.deleteOvertime = function(dateKey) {
             showModal("Hapus Lembur", "Yakin ingin menghapus catatan lembur tanggal ini?", true, async () => {
                 delete appSettings.overtimeLogs[dateKey];
-                
-                await syncWithLoading(() => {
-                    renderOvertimeLogs();
-                });
+                await syncWithLoading(() => renderOvertimeLogs());
             });
         }
 
@@ -862,7 +956,7 @@
                 
             let html = '';
             if(logsThisMonth.length === 0) {
-                html = `<p class="text-xs text-stone-400 italic py-4 text-center border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-xl">${t('empty_log')}</p>`;
+                html = `<p class="text-xs text-stone-400 italic py-4 text-center border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-xl">${t('noLogs')}</p>`;
             } else {
                 logsThisMonth.forEach(dateKey => {
                     const log = appSettings.overtimeLogs[dateKey];
@@ -870,10 +964,12 @@
                     
                     const hours = Math.floor(log.mins / 60);
                     const mins = log.mins % 60;
-                    const durationStr = `${hours > 0 ? hours + 'h' : ''} ${mins > 0 ? mins + 'm' : ''}`.trim();
+                    const hText = appSettings.language === 'ja' ? '時間' : 'Jam';
+                    const mText = appSettings.language === 'ja' ? '分' : 'Mnt';
+                    const durationStr = `${hours > 0 ? hours + hText : ''} ${mins > 0 ? mins + mText : ''}`.trim();
                     
                     const logDate = new Date(dateKey);
-                    const localeStr = appSettings.language === 'id' ? 'id-ID' : 'en-US';
+                    const localeStr = appSettings.language === 'ja' ? 'ja-JP' : 'id-ID';
                     const displayDate = logDate.toLocaleDateString(localeStr, { day: 'numeric', month: 'short' });
                     
                     html += `
@@ -895,7 +991,9 @@
             container.innerHTML = html;
             const tHours = Math.floor(totalMinsThisMonth / 60);
             const tMins = totalMinsThisMonth % 60;
-            totalResult.innerText = `${tHours} ${t('hours')} ${tMins} ${t('mins')}`;
+            const hText = appSettings.language === 'ja' ? '時間' : 'Jam';
+            const mText = appSettings.language === 'ja' ? '分' : 'Mnt';
+            totalResult.innerText = `${tHours} ${hText} ${tMins} ${mText}`;
         }
 
         function openShiftBubble(dateStr, btnElement) {
@@ -904,7 +1002,7 @@
             const tail = document.getElementById('bubble-tail');
             const deleteBtn = document.getElementById('btn-delete-shift');
             
-            const localeStr = appSettings.language === 'id' ? 'id-ID' : 'en-US';
+            const localeStr = appSettings.language === 'ja' ? 'ja-JP' : 'id-ID';
             const displayDate = new Date(dateStr).toLocaleDateString(localeStr, { day: 'numeric', month: 'short', year:'numeric' });
             document.getElementById('bubble-date-label').innerText = displayDate;
             
@@ -1010,7 +1108,7 @@
             
             const year = currentViewDate.getFullYear();
             const month = currentViewDate.getMonth();
-            const localeStr = appSettings.language === 'id' ? 'id-ID' : 'en-US';
+            const localeStr = appSettings.language === 'ja' ? 'ja-JP' : 'id-ID';
             const monthName = new Date(year, month).toLocaleString(localeStr, { month: 'long', year: 'numeric' });
             document.getElementById('current-month-display').innerText = monthName;
 
@@ -1029,8 +1127,10 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateObj = new Date(year, month, day);
                 const dateStr = toYYYYMMDD(dateObj);
+                
                 const isPast = dateStr < todayStr;
-                const isSelected = selectedDates.includes(dateStr);
+                const isHoliday = selectedDates.includes(dateStr);
+                const isYukyu = yukyuDates.includes(dateStr);
                 const hasCustomShift = appSettings.customShifts[dateStr] !== undefined;
                 
                 const btnContainer = document.createElement('div');
@@ -1038,47 +1138,99 @@
 
                 const btn = document.createElement('button');
                 
-                if (isPast) {
-                    // Jika tanggal sudah berlalu: Ubah jadi abu-abu pudar, tidak bisa ditekan, dan status liburnya dihapus.
-                    btn.className = `cal-btn w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-[12px] font-semibold select-none z-10 text-stone-300 dark:text-stone-600 opacity-50 cursor-default pointer-events-none`;
+                let baseClasses = "cal-btn w-8 h-8 md:w-10 md:h-10 rounded-full flex flex-col items-center justify-center text-[12px] font-semibold transition-all duration-300 outline-none focus:outline-none select-none touch-manipulation z-10 ";
+                
+                if (isHoliday) {
+                    if (isPast) {
+                        baseClasses += "bg-teal-100/70 text-teal-400 dark:bg-teal-900/30 dark:text-teal-700 shadow-none ";
+                    } else {
+                        baseClasses += "bg-teal-500 text-white shadow-[0_4px_12px_rgba(20,184,166,0.4)] transform scale-[1.05] ";
+                    }
+                } else if (isYukyu) {
+                    if (isPast) {
+                        baseClasses += "bg-rose-100/70 text-rose-400 dark:bg-rose-900/30 dark:text-rose-700 shadow-none ";
+                    } else {
+                        baseClasses += "bg-rose-500 text-white shadow-[0_4px_12px_rgba(244,63,94,0.4)] transform scale-[1.05] ";
+                    }
                 } else {
-                    // Jika hari ini atau hari di masa depan
-                    btn.className = `cal-btn w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-[12px] font-semibold transition-all duration-300 outline-none focus:outline-none select-none touch-manipulation z-10 
-                        ${isSelected ? 'bg-teal-500 text-white shadow-[0_4px_12px_rgba(20,184,166,0.4)] transform scale-[1.05]' : 'text-stone-600 dark:text-stone-300 bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700'} 
-                        ${isEditMode && !isSelected ? 'hover:border-stone-300 dark:hover:border-stone-600 bg-stone-50 dark:bg-stone-900/50 hover:bg-stone-200 dark:hover:bg-stone-700 cursor-pointer' : ''}`;
-                    
-                    let tapCount = 0;
-                    let tapTimer;
-
-                    btn.onpointerdown = (e) => {
-                        e.preventDefault();
-                        if (isEditMode) {
-                            toggleHoliday(dateStr);
-                        } else {
-                            tapCount++;
-                            if (tapCount === 1) {
-                                tapTimer = setTimeout(() => { tapCount = 0; }, 250); 
-                            } else if (tapCount === 2) {
-                                clearTimeout(tapTimer);
-                                tapCount = 0;
-                                openShiftBubble(dateStr, btn);
-                            }
-                        }
-                    };
+                    baseClasses += "bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700 ";
+                    if (isPast) {
+                        baseClasses += "text-stone-300 dark:text-stone-600 ";
+                    } else {
+                        baseClasses += "text-stone-600 dark:text-stone-300 ";
+                    }
                 }
                 
-                btn.innerText = day;
+                if (isEditMode && !isHoliday && !isYukyu) {
+                    baseClasses += " hover:border-stone-300 dark:hover:border-stone-600 bg-stone-50 dark:bg-stone-900/50 cursor-pointer";
+                }
+
+                btn.className = baseClasses;
+                
+                if (isYukyu) {
+                    btn.innerHTML = `<span class="leading-none mt-1">${day}</span><span class="block text-[8px] leading-[0.5] mt-1 font-bold">有</span>`;
+                } else {
+                    btn.innerHTML = `<span>${day}</span>`;
+                }
+                
+                let tapCount = 0;
+                let tapTimer;
+
+                btn.onpointerdown = (e) => {
+                    e.preventDefault();
+                    if (isEditMode) {
+                        tapCount++;
+                        if (tapCount === 1) {
+                            tapTimer = setTimeout(() => {
+                                tapCount = 0;
+                                if (isYukyu) {
+                                    yukyuDates.splice(yukyuDates.indexOf(dateStr), 1);
+                                } else {
+                                    const idx = selectedDates.indexOf(dateStr);
+                                    if (idx > -1) selectedDates.splice(idx, 1);
+                                    else selectedDates.push(dateStr);
+                                }
+                                renderCalendar();
+                            }, 250);
+                        } else if (tapCount === 2) {
+                            clearTimeout(tapTimer);
+                            tapCount = 0;
+                            if (isHoliday) selectedDates.splice(selectedDates.indexOf(dateStr), 1);
+                            
+                            const yIdx = yukyuDates.indexOf(dateStr);
+                            if (yIdx > -1) yukyuDates.splice(yIdx, 1);
+                            else yukyuDates.push(dateStr);
+                            
+                            renderCalendar();
+                        }
+                    } else {
+                        tapCount++;
+                        if (tapCount === 1) {
+                            tapTimer = setTimeout(() => { tapCount = 0; }, 250); 
+                        } else if (tapCount === 2) {
+                            clearTimeout(tapTimer);
+                            tapCount = 0;
+                            openShiftBubble(dateStr, btn);
+                        }
+                    }
+                };
+                
                 btnContainer.appendChild(btn);
 
-                // Tetap sembunyikan tanda shift di hari yang sudah lewat
-                if(!isPast && hasCustomShift) {
+                if(hasCustomShift) {
                     const endStr = appSettings.customShifts[dateStr];
                     const [eHr, eMin] = endStr.split(':').map(Number);
                     const startHr = (eHr - 9 + 24) % 24;
                     const startStr = `${String(startHr).padStart(2,'0')}:${String(eMin).padStart(2,'0')}`;
                     
                     const badge = document.createElement('div');
-                    badge.className = "absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] sm:text-[9px] leading-none font-bold text-blue-600 bg-blue-100 dark:bg-blue-900/60 dark:text-blue-300 px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap z-20 pointer-events-none border border-blue-200/50 dark:border-blue-800/50";
+                    let badgeClass = "absolute -bottom-[18px] left-1/2 -translate-x-1/2 text-[8px] sm:text-[9px] leading-none font-bold text-blue-600 bg-blue-100 dark:bg-blue-900/60 dark:text-blue-300 px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap z-20 pointer-events-none border border-blue-200/50 dark:border-blue-800/50";
+                    
+                    if(isPast) {
+                        badgeClass = "absolute -bottom-[18px] left-1/2 -translate-x-1/2 text-[8px] sm:text-[9px] leading-none font-bold text-blue-400/70 bg-blue-50/50 dark:bg-blue-900/20 dark:text-blue-700 px-1.5 py-0.5 rounded whitespace-nowrap z-20 pointer-events-none";
+                    }
+                    
+                    badge.className = badgeClass;
                     badge.innerText = startStr;
                     btnContainer.appendChild(badge);
                 }
@@ -1088,37 +1240,34 @@
             updateEditButtonUI();
         }
 
-        function toggleHoliday(dateStr) {
-            const idx = selectedDates.indexOf(dateStr);
-            if (idx > -1) selectedDates.splice(idx, 1);
-            else selectedDates.push(dateStr);
-            
-            selectedDates.sort();
-            renderCalendar();
-        }
-
         window.toggleEditMode = async function() {
             if (!isEditMode) {
                 isEditMode = true;
                 originalDates = [...selectedDates];
+                originalYukyuDates = [...yukyuDates];
+                document.getElementById('calendar-hint').innerText = appSettings.language === 'ja' ? "タップ1回: 休日 | 2回: 有給" : "Tap 1x: Libur | Tap 2x: Yūkyū (有)";
+                document.getElementById('calendar-hint').classList.replace("text-stone-400", "text-teal-600");
                 renderCalendar();
             } else {
-                const isChanged = JSON.stringify(originalDates) !== JSON.stringify(selectedDates);
+                const isChanged = (JSON.stringify(originalDates) !== JSON.stringify(selectedDates)) || 
+                                  (JSON.stringify(originalYukyuDates) !== JSON.stringify(yukyuDates));
                 if (isChanged) {
                     originalDates = [...selectedDates];
+                    originalYukyuDates = [...yukyuDates];
                     
                     await syncWithLoading(() => {
                         updateDashboard();
                         checkExcitingNews();
                     });
-                    
-                    isEditMode = false;
-                    renderCalendar();
                 } else {
                     selectedDates = [...originalDates]; 
-                    isEditMode = false;
-                    renderCalendar();
+                    yukyuDates = [...originalYukyuDates];
                 }
+                
+                isEditMode = false;
+                document.getElementById('calendar-hint').innerText = t('calHint');
+                document.getElementById('calendar-hint').classList.replace("text-teal-600", "text-stone-400");
+                renderCalendar();
             }
         }
 
@@ -1127,16 +1276,17 @@
             if(!btn) return;
             
             if (isEditMode) {
-                const isChanged = JSON.stringify(originalDates) !== JSON.stringify(selectedDates);
+                const isChanged = (JSON.stringify(originalDates) !== JSON.stringify(selectedDates)) || 
+                                  (JSON.stringify(originalYukyuDates) !== JSON.stringify(yukyuDates));
                 if (isChanged) {
-                    btn.innerHTML = `<span data-i18n="save_changes">${t('save_changes')}</span>`;
+                    btn.innerText = t('calSave');
                     btn.className = "px-5 py-2 rounded-full text-xs font-bold transition-all bg-teal-500 text-white shadow-[0_4px_12px_rgba(20,184,166,0.3)] outline-none touch-manipulation flex-shrink-0 active:scale-95";
                 } else {
-                    btn.innerHTML = `<span data-i18n="cancel">${t('cancel')}</span>`;
+                    btn.innerText = t('calCancel');
                     btn.className = "px-5 py-2 rounded-full text-xs font-bold transition-all bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 outline-none touch-manipulation flex-shrink-0 active:scale-95";
                 }
             } else {
-                btn.innerHTML = `<span data-i18n="edit_calendar">${t('edit_calendar')}</span>`;
+                btn.innerText = t('calEdit');
                 btn.className = "px-5 py-2 rounded-full text-xs font-bold transition-all bg-stone-100 text-stone-600 dark:bg-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-600 outline-none touch-manipulation flex-shrink-0 active:scale-95 shadow-sm";
             }
         }
@@ -1155,11 +1305,11 @@
             
             while(consecutive < 100) { 
                 const dStr = toYYYYMMDD(tempDate);
-                if (selectedDates.includes(dStr)) {
+                if (selectedDates.includes(dStr) || yukyuDates.includes(dStr)) {
                     let c = 1;
                     let checkD = new Date(tempDate);
                     checkD.setDate(checkD.getDate() + 1);
-                    while(selectedDates.includes(toYYYYMMDD(checkD))) {
+                    while(selectedDates.includes(toYYYYMMDD(checkD)) || yukyuDates.includes(toYYYYMMDD(checkD))) {
                         c++;
                         checkD.setDate(checkD.getDate() + 1);
                     }
