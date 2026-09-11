@@ -270,7 +270,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Murni konfigurasi asli Anda (tanpa override)
         const firebaseConfig = {
@@ -306,6 +306,7 @@
         let currentViewDate = new Date();
         let progressInterval;
         let activeBubbleDate = null;
+        let isInitialized = false;
 
         const i18n = {
             'id': {
@@ -345,7 +346,6 @@
             return i18n[lang][key] || key;
         }
 
-        // FUNGSI MODAL PENGGANTI ALERT/CONFIRM
         function showModal(title, message, isConfirm, onConfirm) {
             const modal = document.getElementById('custom-modal');
             document.getElementById('modal-title').innerText = title;
@@ -396,13 +396,8 @@
             return `${hrs}:${mins}`;
         }
 
-        // PENGIRIMAN DATA MENGGUNAKAN FULL OVERWRITE + ERROR DETECTOR
         async function syncToFirebaseBackground() {
-            if (!userId) {
-                console.error("Gagal sinkronisasi: User belum terautentikasi.");
-                showModal("Gagal Menyimpan", "Koneksi terputus. Pastikan fitur 'Anonymous Auth' aktif di Firebase Anda.", false);
-                return;
-            }
+            if (!userId) return;
             try {
                 const userRef = doc(db, 'artifacts', appIdString, 'users', userId, 'data', 'state');
                 await setDoc(userRef, { 
@@ -410,7 +405,6 @@
                     holidays: selectedDates,
                     lastSync: new Date().toISOString()
                 });
-                console.log("Sinkronisasi sukses ke path:", userRef.path);
             } catch(e) {
                 console.error("Firebase background sync failed:", e);
                 showModal("Akses Ditolak Firebase", "Pesan: " + e.message + "\n\nPastikan aturan Firestore Rules (Security Rules) mengizinkan penulisan.", false);
@@ -443,23 +437,27 @@
             document.getElementById('setting-language').value = appSettings.language;
             document.getElementById('reg-time-display').innerText = `Reg: ${appSettings.endTime}`;
             
-            document.getElementById('overtime-date').value = toYYYYMMDD(new Date());
-            document.getElementById('actual-end-time').value = getCurrentTimeHHMM();
-
             updateDashboard();
             renderCalendar();
             renderOvertimeLogs();
             checkExcitingNews();
             window.updateShiftIndicator();
             
-            document.addEventListener('pointerdown', (e) => {
-                const bubble = document.getElementById('shift-bubble');
-                if(bubble.classList.contains('opacity-100') && !bubble.contains(e.target) && !e.target.closest('.cal-btn')) {
-                    closeShiftBubble();
-                }
-            });
+            if (!isInitialized) {
+                document.getElementById('overtime-date').value = toYYYYMMDD(new Date());
+                document.getElementById('actual-end-time').value = getCurrentTimeHHMM();
+
+                document.addEventListener('pointerdown', (e) => {
+                    const bubble = document.getElementById('shift-bubble');
+                    if(bubble.classList.contains('opacity-100') && !bubble.contains(e.target) && !e.target.closest('.cal-btn')) {
+                        closeShiftBubble();
+                    }
+                });
+                isInitialized = true;
+            }
         }
 
+        // KUNCI PERBAIKAN FIREBASE DI SINI (onSnapshot & Manual UserID)
         window.onload = async () => {
             const overlay = document.getElementById('loading-overlay');
             document.getElementById('loading-text').innerText = 'Menyinkronkan Data...';
@@ -468,33 +466,54 @@
             setTimeout(() => overlay.classList.add('opacity-100'), 10);
 
             try {
-                const userCredential = await signInAnonymously(auth);
-                userId = userCredential.user.uid;
+                // Autentikasi tetap dijalankan agar Firestore tidak menolak request karena belum login
+                await signInAnonymously(auth);
+                
+                // MENGUNCI USER ID
+                // Karena Anonymous Auth akan membuat ID berbeda di HP dan Laptop, 
+                // kita paksa mereka menunjuk ke "my_personal_account".
+                userId = "my_personal_account";
                 
                 const userRef = doc(db, 'artifacts', appIdString, 'users', userId, 'data', 'state');
-                const docSnap = await getDoc(userRef);
+                
+                // onSnapshot = REAL-TIME LISTENER
+                // Apabila Anda mengedit libur di HP, layar di PC/Laptop Anda akan 
+                // langsung berubah tanpa perlu refresh halaman!
+                onSnapshot(userRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const cloudData = docSnap.data();
+                        if (cloudData.settings) {
+                            appSettings = { ...appSettings, ...cloudData.settings };
+                            if(!appSettings.overtimeLogs) appSettings.overtimeLogs = {};
+                            if(!appSettings.customShifts) appSettings.customShifts = {};
+                        }
+                        if (cloudData.holidays) {
+                            selectedDates = cloudData.holidays;
+                            originalDates = [...selectedDates];
+                        }
+                    }
+                    
+                    initUI(); // Perbarui tampilan dengan data terbaru
+                    
+                    overlay.classList.remove('opacity-100');
+                    setTimeout(() => overlay.classList.add('hidden'), 300);
+                }, (error) => {
+                    console.error("Firebase Realtime Error:", error);
+                    showModal("Koneksi Firebase Ditolak", "Pesan: " + error.message + "\n\nPastikan Rules Firestore mengizinkan read/write.", false);
+                    initUI();
+                    
+                    overlay.classList.remove('opacity-100');
+                    setTimeout(() => overlay.classList.add('hidden'), 300);
+                });
 
-                if (docSnap.exists()) {
-                    const cloudData = docSnap.data();
-                    if (cloudData.settings) {
-                        appSettings = { ...appSettings, ...cloudData.settings };
-                        if(!appSettings.overtimeLogs) appSettings.overtimeLogs = {};
-                        if(!appSettings.customShifts) appSettings.customShifts = {};
-                    }
-                    if (cloudData.holidays) {
-                        selectedDates = cloudData.holidays;
-                        originalDates = [...selectedDates];
-                    }
-                }
             } catch(e) {
                 console.error("Firebase Load Error:", e);
                 showModal("Koneksi Firebase Gagal", "Pesan Error: " + e.message, false);
+                initUI();
+                
+                overlay.classList.remove('opacity-100');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
             }
-
-            initUI(); 
-
-            overlay.classList.remove('opacity-100');
-            setTimeout(() => overlay.classList.add('hidden'), 300);
         };
 
         window.saveSettingsEvent = function() {
