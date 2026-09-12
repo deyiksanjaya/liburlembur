@@ -719,7 +719,7 @@
             }
             
             let baseUrl = window.location.origin + window.location.pathname;
-            const link = baseUrl + "?for=" + encodeURIComponent(name);
+            const link = baseUrl + "public.html?for=" + encodeURIComponent(name);
             
             try {
                 navigator.clipboard.writeText(link).then(() => {
