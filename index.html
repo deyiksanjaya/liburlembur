@@ -42,7 +42,7 @@
 
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        input[type="date"], input[type="time"], select {
+        input[type="date"], input[type="time"], select, input[type="text"] {
             -webkit-appearance: none;
             min-width: 0 !important;
             appearance: none;
@@ -202,7 +202,6 @@
                             </select>
                         </div>
 
-                        <!-- Pengaturan Bahasa -->
                         <div class="flex items-center justify-between pb-2 gap-4">
                             <h3 id="set-lang-label" class="font-semibold text-stone-700 dark:text-stone-200 text-sm truncate">Bahasa</h3>
                             <select id="setting-lang" onchange="window.saveSettingsEvent()" class="bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl px-3 py-2 text-sm font-semibold text-stone-700 dark:text-stone-200 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all shadow-sm cursor-pointer w-[110px] text-center">
@@ -214,25 +213,51 @@
                 </div>
             </div>
 
+            <!-- TAB 5: PESAN -->
+            <div id="tab-messages" class="tab-content hidden animate-[fadeInUp_0.3s_ease-out]">
+                <div class="bg-white dark:bg-stone-800 rounded-3xl p-5 border border-stone-100 dark:border-stone-700 shadow-sm overflow-hidden flex flex-col gap-6">
+                    <div>
+                        <h2 id="msg-share-title" class="text-lg font-bold text-stone-800 dark:text-white mb-3">Bagikan Jadwal</h2>
+                        <p id="msg-share-desc" class="text-[11px] text-stone-500 dark:text-stone-400 mb-3 leading-tight">Buat link khusus untuk membagikan jadwalmu ke orang lain.</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="share-name-input" placeholder="Nama penerima..." class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl px-3 py-2 text-sm font-semibold text-stone-700 dark:text-stone-200 outline-none focus:border-teal-500 focus:ring-1 transition-all">
+                            <button onclick="window.copyShareLink()" class="bg-teal-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-[0_4px_12px_rgba(20,184,166,0.3)] hover:bg-teal-400 active:scale-95 transition-all outline-none flex-shrink-0">Copy</button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h2 id="msg-inbox-title" class="text-lg font-bold text-stone-800 dark:text-white mb-3">Kotak Masuk</h2>
+                        <div id="messages-container" class="space-y-3 pb-4">
+                            <!-- Messages will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
 
-        <!-- Navigasi Bawah -->
-        <nav class="absolute bottom-0 w-full bg-white/95 dark:bg-stone-900/95 backdrop-blur-xl border-t border-stone-200/50 dark:border-stone-800/50 flex justify-around z-30 flex-shrink-0 safe-pb shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
-            <button onclick="window.switchTab('tab-home')" id="nav-tab-home" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-teal-600 dark:text-teal-400 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95">
-                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                <span id="nav-lbl-home" class="text-[10px] font-bold">Home</span>
+        <!-- Navigasi Bawah (Diperbarui jadi 5 Tab) -->
+        <nav class="absolute bottom-0 w-full bg-white/95 dark:bg-stone-900/95 backdrop-blur-xl border-t border-stone-200/50 dark:border-stone-800/50 flex justify-around z-30 flex-shrink-0 safe-pb shadow-[0_-4px_20px_rgba(0,0,0,0.03)] px-1">
+            <button onclick="window.switchTab('tab-home')" id="nav-tab-home" class="nav-btn flex flex-col items-center justify-center p-2 text-teal-600 dark:text-teal-400 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95 min-w-[56px]">
+                <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                <span id="nav-lbl-home" class="text-[9px] font-bold">Home</span>
             </button>
-            <button onclick="window.switchTab('tab-lembur')" id="nav-tab-lembur" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95">
-                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span id="nav-lbl-lembur" class="text-[10px] font-bold">Lembur</span>
+            <button onclick="window.switchTab('tab-lembur')" id="nav-tab-lembur" class="nav-btn flex flex-col items-center justify-center p-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95 min-w-[56px]">
+                <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span id="nav-lbl-lembur" class="text-[9px] font-bold">Lembur</span>
             </button>
-            <button onclick="window.switchTab('tab-calendar')" id="nav-tab-calendar" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95">
-                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                <span id="nav-lbl-calendar" class="text-[10px] font-bold">Kalender</span>
+            <button onclick="window.switchTab('tab-calendar')" id="nav-tab-calendar" class="nav-btn flex flex-col items-center justify-center p-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95 min-w-[56px]">
+                <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <span id="nav-lbl-calendar" class="text-[9px] font-bold">Kalender</span>
             </button>
-            <button onclick="window.switchTab('tab-settings')" id="nav-tab-settings" class="nav-btn flex-1 flex flex-col items-center justify-center p-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95">
-                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <span id="nav-lbl-settings" class="text-[10px] font-bold">Pengaturan</span>
+            <button onclick="window.switchTab('tab-messages')" id="nav-tab-messages" class="nav-btn flex flex-col items-center justify-center p-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95 relative min-w-[56px]">
+                <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                <span id="nav-msg-badge" class="absolute top-1.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full hidden border border-white dark:border-stone-900 shadow-sm"></span>
+                <span id="nav-lbl-messages" class="text-[9px] font-bold">Pesan</span>
+            </button>
+            <button onclick="window.switchTab('tab-settings')" id="nav-tab-settings" class="nav-btn flex flex-col items-center justify-center p-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors outline-none focus:outline-none touch-manipulation active:scale-95 min-w-[56px]">
+                <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span id="nav-lbl-settings" class="text-[9px] font-bold">Pengaturan</span>
             </button>
         </nav>
         
@@ -271,7 +296,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDW4v73HwelLT9No71Hf-Mv1o_fahRPCe8",
@@ -352,13 +377,20 @@
                 navLembur: "Lembur",
                 navCalendar: "Kalender",
                 navSettings: "Pengaturan",
+                navMessages: "Pesan",
                 bubbleTitle: "Shift Khusus",
                 bubbleStart: "Jam Masuk",
                 bubbleEnd: "Jam Pulang",
                 btnSave: "Simpan",
                 btnDelete: "Hapus",
                 modalWarn: "Peringatan",
-                noLogs: "Belum ada catatan lembur bulan ini."
+                noLogs: "Belum ada catatan lembur bulan ini.",
+                msgShareTitle: "Bagikan Jadwal",
+                msgShareDesc: "Buat link khusus untuk membagikan jadwalmu ke orang lain.",
+                msgSharePlaceholder: "Nama penerima...",
+                msgInboxTitle: "Kotak Masuk",
+                msgEmpty: "Belum ada pesan masuk.",
+                msgRead: "Tandai dibaca"
             },
             ja: {
                 appName: "休日・残業トラッカー",
@@ -401,13 +433,20 @@
                 navLembur: "残業",
                 navCalendar: "カレンダー",
                 navSettings: "設定",
+                navMessages: "メッセージ",
                 bubbleTitle: "特別シフト",
                 bubbleStart: "出勤時刻",
                 bubbleEnd: "退勤時刻",
                 btnSave: "保存",
                 btnDelete: "削除",
                 modalWarn: "警告",
-                noLogs: "今月の残業記録はありません。"
+                noLogs: "今月の残業記録はありません。",
+                msgShareTitle: "スケジュールを共有",
+                msgShareDesc: "スケジュールを共有するための専用リンクを作成します。",
+                msgSharePlaceholder: "受信者の名前...",
+                msgInboxTitle: "受信トレイ",
+                msgEmpty: "新しいメッセージはありません。",
+                msgRead: "既読にする"
             }
         };
 
@@ -474,13 +513,12 @@
             if (!userId) return;
             try {
                 const userRef = doc(db, 'artifacts', appIdString, 'users', userId, 'data', 'state');
-                // FIXED BUG 3: Added { merge: true } to prevent accidental data overwrites
                 await setDoc(userRef, { 
                     settings: appSettings, 
                     holidays: selectedDates,
                     yukyu: yukyuDates,
                     lastSync: new Date().toISOString()
-                }, { merge: true });
+                }, { merge: true }); // Menggunakan merge untuk mencegah overwrite tidak disengaja
             } catch(e) {
                 console.error("Firebase background sync failed:", e);
             }
@@ -536,7 +574,13 @@
             document.getElementById('nav-lbl-lembur').innerText = t('navLembur');
             document.getElementById('nav-lbl-calendar').innerText = t('navCalendar');
             document.getElementById('nav-lbl-settings').innerText = t('navSettings');
+            document.getElementById('nav-lbl-messages').innerText = t('navMessages');
             
+            document.getElementById('msg-share-title').innerText = t('msgShareTitle');
+            document.getElementById('msg-share-desc').innerText = t('msgShareDesc');
+            document.getElementById('share-name-input').placeholder = t('msgSharePlaceholder');
+            document.getElementById('msg-inbox-title').innerText = t('msgInboxTitle');
+
             document.getElementById('bubble-title-label').innerText = t('bubbleTitle');
             document.getElementById('bubble-start-label').innerText = t('bubbleStart');
             document.getElementById('bubble-end-label').innerText = t('bubbleEnd');
@@ -589,8 +633,7 @@
 
             try {
                 await signInAnonymously(auth);
-                // Note: Hardcoding this ID means multiple devices sync perfectly, but anyone with the app URL can edit your data.
-                userId = "my_personal_account"; 
+                userId = "my_personal_account";
                 
                 const userRef = doc(db, 'artifacts', appIdString, 'users', userId, 'data', 'state');
                 
@@ -622,12 +665,146 @@
                     setTimeout(() => overlay.classList.add('hidden'), 300);
                 });
 
+                // Pesan Listener & Auto-Delete logic
+                const msgsRef = collection(db, 'artifacts', appIdString, 'users', userId, 'messages');
+                onSnapshot(msgsRef, (snapshot) => {
+                    const now = new Date();
+                    const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
+                    let messagesList = [];
+                    let unreadCount = 0;
+
+                    snapshot.forEach(docSnap => {
+                        const data = docSnap.data();
+                        const id = docSnap.id;
+                        
+                        // Hapus pesan jika sudah dibaca dan lewat dari 2 hari
+                        if (data.isRead && data.readAt) {
+                            const readTime = new Date(data.readAt);
+                            if (now - readTime > twoDaysMs) {
+                                deleteDoc(doc(db, 'artifacts', appIdString, 'users', userId, 'messages', id));
+                                return; 
+                            }
+                        }
+
+                        if (!data.isRead) unreadCount++;
+                        messagesList.push({ id, ...data });
+                    });
+
+                    // Sort pesan terbaru ke atas
+                    messagesList.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    
+                    renderMessages(messagesList);
+
+                    // Update Notification Badge di Navigasi Bawah
+                    const badge = document.getElementById('nav-msg-badge');
+                    if(badge) {
+                        if (unreadCount > 0) badge.classList.remove('hidden');
+                        else badge.classList.add('hidden');
+                    }
+                }, (err) => console.error("Gagal memuat pesan:", err));
+
             } catch(e) {
                 initUI();
                 overlay.classList.remove('opacity-100');
                 setTimeout(() => overlay.classList.add('hidden'), 300);
             }
         };
+
+        window.copyShareLink = function() {
+            const nameInput = document.getElementById('share-name-input');
+            const name = nameInput.value.trim();
+            if(!name) {
+                showModal(t('modalWarn'), "Masukkan nama penerima terlebih dahulu.", false);
+                return;
+            }
+            
+            let baseUrl = window.location.origin + window.location.pathname;
+            const link = baseUrl + "?for=" + encodeURIComponent(name);
+            
+            try {
+                navigator.clipboard.writeText(link).then(() => {
+                    showModal("Berhasil!", "Link berhasil disalin:\n\n" + link, false);
+                    nameInput.value = '';
+                }).catch(() => fallbackCopy(link));
+            } catch (e) {
+                fallbackCopy(link);
+            }
+        };
+
+        function fallbackCopy(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed"; 
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showModal("Berhasil!", "Link berhasil disalin:\n\n" + text, false);
+                document.getElementById('share-name-input').value = '';
+            } catch (err) {
+                showModal(t('modalWarn'), "Gagal menyalin link secara otomatis.", false);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        window.markMessageRead = async function(msgId) {
+            try {
+                const msgRef = doc(db, 'artifacts', appIdString, 'users', "my_personal_account", 'messages', msgId);
+                await updateDoc(msgRef, {
+                    isRead: true,
+                    readAt: new Date().toISOString()
+                });
+            } catch(e) {
+                console.error("Gagal update status pesan:", e);
+            }
+        };
+
+        function renderMessages(messages) {
+            const container = document.getElementById('messages-container');
+            if(!container) return;
+            
+            if (messages.length === 0) {
+                container.innerHTML = `<p class="text-xs text-stone-400 italic py-6 text-center border-2 border-dashed border-stone-200 dark:border-stone-700 rounded-xl">${t('msgEmpty')}</p>`;
+                return;
+            }
+
+            let html = '';
+            messages.forEach(msg => {
+                const msgDate = new Date(msg.timestamp);
+                const localeStr = appSettings.language === 'ja' ? 'ja-JP' : 'id-ID';
+                const timeStr = msgDate.toLocaleTimeString(localeStr, { hour: '2-digit', minute: '2-digit' });
+                const dateStr = msgDate.toLocaleDateString(localeStr, { day: 'numeric', month: 'short' });
+                const displayTime = `${dateStr}, ${timeStr}`;
+
+                html += `
+                    <div class="bg-stone-50 dark:bg-stone-900/50 rounded-xl p-4 border ${msg.isRead ? 'border-stone-100 dark:border-stone-700/50 opacity-70' : 'border-teal-200 dark:border-teal-800 shadow-sm'} transition-all">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 class="font-bold text-sm text-stone-800 dark:text-stone-200 flex items-center gap-2">
+                                    ${msg.sender || 'Anonim'}
+                                    ${!msg.isRead ? '<span class="w-1.5 h-1.5 rounded-full bg-teal-500 block"></span>' : ''}
+                                </h4>
+                                <span class="text-[9px] font-semibold text-stone-400 uppercase tracking-wider">${displayTime}</span>
+                            </div>
+                        </div>
+                        <p class="text-sm text-stone-600 dark:text-stone-300 font-medium leading-relaxed mb-3 break-words whitespace-pre-wrap">${msg.message}</p>
+                        ${!msg.isRead ? `
+                            <button onclick="window.markMessageRead('${msg.id}')" class="text-[10px] font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 px-3 py-1.5 rounded-lg hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors active:scale-95 outline-none">
+                                ${t('msgRead')}
+                            </button>
+                        ` : `
+                            <span class="text-[10px] font-bold text-stone-400 dark:text-stone-600 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                Dibaca
+                            </span>
+                        `}
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
 
         window.saveSettingsEvent = function() {
             appSettings.startTime = document.getElementById('setting-start-time').value || '07:00';
@@ -739,12 +916,10 @@
             let startOfShift = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startHr, startMin, 0);
             let endOfShift = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endHr, endMin, 0);
             
-            // FIXED BUG 2: Correct Night Shift Cross-Midnight Handling
             if (endOfShift <= startOfShift) {
-                endOfShift.setDate(endOfShift.getDate() + 1); // Shift ends tomorrow
+                endOfShift.setDate(endOfShift.getDate() + 1); 
             }
 
-            // Check if we are currently inside the night shift that started YESTERDAY
             let yesterdayStart = new Date(startOfShift);
             yesterdayStart.setDate(yesterdayStart.getDate() - 1);
             let yesterdayEnd = new Date(endOfShift);
@@ -754,10 +929,8 @@
                 startOfShift = yesterdayStart;
                 endOfShift = yesterdayEnd;
             }
-            // End Fix 2
             
             if (now < startOfShift) {
-                // Shift hasn't started yet, show full duration
                 const diffMs = endOfShift - startOfShift;
                 const h = Math.floor(diffMs / (1000 * 60 * 60));
                 const m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -767,7 +940,6 @@
                 shiftText.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
                 shiftText.className = "text-2xl font-mono font-bold text-stone-400 tabular-nums tracking-tighter drop-shadow-sm transition-all";
             } else if (now >= startOfShift && now < endOfShift) {
-                // Shift is ongoing
                 const diffMs = endOfShift - now;
                 const h = Math.floor(diffMs / (1000 * 60 * 60));
                 const m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -777,7 +949,6 @@
                 shiftText.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
                 shiftText.className = "text-2xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm transition-all";
             } else {
-                // Shift is completed
                 labelText.innerText = "";
                 shiftText.innerText = t('shiftEndedMsg');
                 shiftText.className = "text-sm sm:text-base font-bold text-teal-600 dark:text-teal-400 drop-shadow-sm transition-all mt-1";
@@ -852,7 +1023,6 @@
                 updateProgressBar();
                 progressInterval = setInterval(updateProgressBar, 1000); 
             } else {
-                
                 let cardBgClass = "bg-white dark:bg-stone-800 border-stone-100 dark:border-stone-700";
                 
                 if (status.nextHolidayStr) {
@@ -1108,7 +1278,6 @@
                 const shiftData = appSettings.customShifts[dateStr];
                 
                 if (typeof shiftData === 'string') {
-                    // Legacy string logic parsing
                     const endStr = shiftData;
                     const [eHr, eMin] = endStr.split(':').map(Number);
                     let startHr = (eHr - 9 + 24) % 24;
@@ -1395,7 +1564,6 @@
             }
         }
 
-        // FIXED BUG 1: Prevents skipping months when changing months on the 31st
         window.changeMonth = function(delta) {
             currentViewDate.setDate(1); 
             currentViewDate.setMonth(currentViewDate.getMonth() + delta);
