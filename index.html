@@ -474,12 +474,13 @@
             if (!userId) return;
             try {
                 const userRef = doc(db, 'artifacts', appIdString, 'users', userId, 'data', 'state');
+                // FIXED BUG 3: Added { merge: true } to prevent accidental data overwrites
                 await setDoc(userRef, { 
                     settings: appSettings, 
                     holidays: selectedDates,
                     yukyu: yukyuDates,
                     lastSync: new Date().toISOString()
-                });
+                }, { merge: true });
             } catch(e) {
                 console.error("Firebase background sync failed:", e);
             }
@@ -588,7 +589,8 @@
 
             try {
                 await signInAnonymously(auth);
-                userId = "my_personal_account";
+                // Note: Hardcoding this ID means multiple devices sync perfectly, but anyone with the app URL can edit your data.
+                userId = "my_personal_account"; 
                 
                 const userRef = doc(db, 'artifacts', appIdString, 'users', userId, 'data', 'state');
                 
@@ -710,7 +712,6 @@
             const now = new Date();
             const todayStr = toYYYYMMDD(now);
             
-            // Fix Midnight Bug
             if (!window.lastCheckedDateStr) window.lastCheckedDateStr = todayStr;
             if (window.lastCheckedDateStr !== todayStr) {
                 window.lastCheckedDateStr = todayStr;
@@ -735,12 +736,25 @@
             const [startHr, startMin] = baselineStart.split(':').map(Number);
             const [endHr, endMin] = baselineEnd.split(':').map(Number);
             
-            const startOfShift = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startHr, startMin, 0);
+            let startOfShift = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startHr, startMin, 0);
             let endOfShift = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endHr, endMin, 0);
             
-            if (endOfShift < startOfShift) {
-                endOfShift.setDate(endOfShift.getDate() + 1); 
+            // FIXED BUG 2: Correct Night Shift Cross-Midnight Handling
+            if (endOfShift <= startOfShift) {
+                endOfShift.setDate(endOfShift.getDate() + 1); // Shift ends tomorrow
             }
+
+            // Check if we are currently inside the night shift that started YESTERDAY
+            let yesterdayStart = new Date(startOfShift);
+            yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+            let yesterdayEnd = new Date(endOfShift);
+            yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
+
+            if (now >= yesterdayStart && now < yesterdayEnd) {
+                startOfShift = yesterdayStart;
+                endOfShift = yesterdayEnd;
+            }
+            // End Fix 2
             
             if (now < startOfShift) {
                 // Shift hasn't started yet, show full duration
@@ -839,7 +853,6 @@
                 progressInterval = setInterval(updateProgressBar, 1000); 
             } else {
                 
-                // Tema Gradual Berdasarkan Sisa Hari Kerja (Putih ke Hijau)
                 let cardBgClass = "bg-white dark:bg-stone-800 border-stone-100 dark:border-stone-700";
                 
                 if (status.nextHolidayStr) {
@@ -864,7 +877,6 @@
                             <span class="text-[6rem] leading-[1] font-black text-stone-800 dark:text-white tracking-tighter drop-shadow-sm">${status.workingDaysLeft}</span>
                         </div>
                         
-                        <!-- LINE BREAK VERSION (As Requested) -->
                         <div class="flex flex-col items-center justify-center gap-1 mb-6 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]">
                             <span class="text-stone-500 dark:text-stone-400 font-bold text-sm uppercase tracking-widest">${t('workdayLabel')}</span>
                             <span class="text-stone-400 dark:text-stone-500 font-semibold text-xs tracking-wide">${status.totalCalendarDays} ${t('distanceDays')}</span>
@@ -1247,7 +1259,6 @@
                     baseClasses += " hover:border-stone-300 dark:hover:border-stone-600 bg-stone-50 dark:bg-stone-900/50 cursor-pointer";
                 }
 
-                // VISUAL INDICATOR HARI INI
                 if (isToday) {
                     baseClasses += " ring-2 ring-teal-500 ring-offset-2 dark:ring-offset-stone-800 ";
                 }
@@ -1384,7 +1395,9 @@
             }
         }
 
+        // FIXED BUG 1: Prevents skipping months when changing months on the 31st
         window.changeMonth = function(delta) {
+            currentViewDate.setDate(1); 
             currentViewDate.setMonth(currentViewDate.getMonth() + delta);
             renderCalendar();
             closeShiftBubble(); 
