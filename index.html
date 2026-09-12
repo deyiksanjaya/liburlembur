@@ -60,7 +60,6 @@
 
         ::-webkit-scrollbar { width: 0px; background: transparent; }
         
-        /* DIPERBAIKI: Mengurangi padding agar toolbar lebih ramping */
         .safe-pb { 
             padding-bottom: calc(0.5rem + env(safe-area-inset-bottom)); 
             padding-top: 0.5rem; 
@@ -107,7 +106,7 @@
                 <div class="bg-white dark:bg-stone-800 rounded-3xl p-5 border border-stone-100 dark:border-stone-700 shadow-sm overflow-hidden">
                     <div class="flex justify-between items-center mb-6">
                         <h2 id="lembur-title" class="text-lg font-bold text-stone-800 dark:text-white leading-tight">Buku Lembur</h2>
-                        <span id="reg-time-display" class="text-[10px] font-semibold text-stone-400 bg-stone-100 dark:bg-stone-700 px-2 py-1 rounded-md tracking-wide">Reg: 17:00</span>
+                        <span id="reg-time-display" class="text-[10px] font-semibold text-stone-400 bg-stone-100 dark:bg-stone-700 px-2 py-1 rounded-md tracking-wide">Reg: 07:00-17:00</span>
                     </div>
 
                     <div class="bg-gradient-to-r from-stone-50 to-stone-100 dark:from-stone-900 dark:to-stone-800 rounded-2xl p-5 mb-6 flex justify-between items-center border border-stone-200 dark:border-stone-700 shadow-inner">
@@ -177,6 +176,14 @@
                     <h2 id="settings-title" class="text-lg font-bold text-stone-800 dark:text-white mb-6">Pengaturan</h2>
                     
                     <div class="space-y-7">
+                        <div class="flex items-center justify-between border-b border-stone-100 dark:border-stone-700 pb-6 gap-4">
+                            <div class="flex-1 min-w-0">
+                                <h3 id="set-starttime-label" class="font-semibold text-stone-700 dark:text-stone-200 text-sm truncate">Jam Masuk Reguler</h3>
+                                <p id="set-starttime-desc" class="text-[10px] text-stone-400 mt-1 leading-tight break-words pr-2">Awal perhitungan jam kerja</p>
+                            </div>
+                            <input type="time" id="setting-start-time" onchange="window.saveSettingsEvent()" class="bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl px-2 py-2 text-sm font-semibold text-stone-700 dark:text-stone-200 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all flex-shrink-0 w-[110px] text-center shadow-sm">
+                        </div>
+
                         <div class="flex items-center justify-between border-b border-stone-100 dark:border-stone-700 pb-6 gap-4">
                             <div class="flex-1 min-w-0">
                                 <h3 id="set-endtime-label" class="font-semibold text-stone-700 dark:text-stone-200 text-sm truncate">Jam Pulang Reguler</h3>
@@ -288,6 +295,7 @@
         let isEditMode = false;
         
         let appSettings = {
+            startTime: '07:00',
             endTime: '17:00',
             theme: 'light',
             language: 'id',
@@ -329,6 +337,8 @@
                 calCancel: "Batal",
                 days: ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"],
                 settingsTitle: "Pengaturan",
+                setStarttime: "Jam Masuk Reguler",
+                setStarttimeDesc: "Awal perhitungan jam kerja",
                 setEndtime: "Jam Pulang Reguler",
                 setEndtimeDesc: "Patokan waktu menghitung lembur",
                 setTheme: "Tema",
@@ -342,7 +352,6 @@
                 navSettings: "Pengaturan",
                 bubbleTitle: "Shift Khusus",
                 bubbleStart: "Jam Masuk",
-                bubbleEnd: "Jam Pulang (Masuk + 9 Jam):",
                 btnSave: "Simpan",
                 btnDelete: "Hapus",
                 modalWarn: "Peringatan",
@@ -376,6 +385,8 @@
                 calCancel: "キャンセル",
                 days: ["月", "火", "水", "木", "金", "土", "日"],
                 settingsTitle: "設定",
+                setStarttime: "定時（出勤時刻）",
+                setStarttimeDesc: "労働時間の計算開始",
                 setEndtime: "定時（退勤時刻）",
                 setEndtimeDesc: "残業計算の基準時間",
                 setTheme: "テーマ",
@@ -389,7 +400,6 @@
                 navSettings: "設定",
                 bubbleTitle: "特別シフト",
                 bubbleStart: "出勤時刻",
-                bubbleEnd: "退勤時刻 (出勤 + 9時間):",
                 btnSave: "保存",
                 btnDelete: "削除",
                 modalWarn: "警告",
@@ -485,6 +495,26 @@
             overlay.classList.add('hidden');
         }
 
+        window.updateBubbleLabels = function() {
+            const sTime = appSettings.startTime || '07:00';
+            const eTime = appSettings.endTime || '17:00';
+            const [sH, sM] = sTime.split(':').map(Number);
+            const [eH, eM] = eTime.split(':').map(Number);
+            
+            let sTotal = sH * 60 + sM;
+            let eTotal = eH * 60 + eM;
+            if (eTotal < sTotal) eTotal += 24 * 60;
+            
+            const diffHours = (eTotal - sTotal) / 60;
+            const roundedDiff = Number.isInteger(diffHours) ? diffHours : diffHours.toFixed(1);
+            
+            const baseTxt = appSettings.language === 'ja' ? '退勤時刻' : 'Jam Pulang';
+            const addTxt = appSettings.language === 'ja' ? `(出勤 + ${roundedDiff}時間):` : `(Masuk + ${roundedDiff} Jam):`;
+            
+            const label = document.getElementById('bubble-end-label');
+            if(label) label.innerText = `${baseTxt} ${addTxt}`;
+        }
+
         function updateStaticTexts() {
             document.getElementById('app-header-title').innerText = t('appName');
             document.getElementById('news-header-label').innerText = t('newsHeader');
@@ -503,6 +533,12 @@
             }
             
             document.getElementById('settings-title').innerText = t('settingsTitle');
+            
+            const setStartEl = document.getElementById('set-starttime-label');
+            if(setStartEl) setStartEl.innerText = t('setStarttime');
+            const setStartDescEl = document.getElementById('set-starttime-desc');
+            if(setStartDescEl) setStartDescEl.innerText = t('setStarttimeDesc');
+            
             document.getElementById('set-endtime-label').innerText = t('setEndtime');
             document.getElementById('set-endtime-desc').innerText = t('setEndtimeDesc');
             document.getElementById('set-theme-label').innerText = t('setTheme');
@@ -518,7 +554,9 @@
             
             document.getElementById('bubble-title-label').innerText = t('bubbleTitle');
             document.getElementById('bubble-start-label').innerText = t('bubbleStart');
-            document.getElementById('bubble-end-label').innerText = t('bubbleEnd');
+            
+            updateBubbleLabels();
+            
             document.getElementById('btn-save-shift').innerText = t('btnSave');
             document.getElementById('btn-delete-shift').innerText = t('btnDelete');
 
@@ -531,10 +569,10 @@
             applyTheme();
             updateStaticTexts();
             
-            document.getElementById('setting-end-time').value = appSettings.endTime;
+            document.getElementById('setting-start-time').value = appSettings.startTime || '07:00';
+            document.getElementById('setting-end-time').value = appSettings.endTime || '17:00';
             document.getElementById('setting-theme').value = appSettings.theme;
             document.getElementById('setting-lang').value = appSettings.language || 'id';
-            document.getElementById('reg-time-display').innerText = `Reg: ${appSettings.endTime}`;
             
             updateDashboard();
             renderCalendar();
@@ -573,6 +611,7 @@
                         const cloudData = docSnap.data();
                         if (cloudData.settings) {
                             appSettings = { ...appSettings, ...cloudData.settings };
+                            if(!appSettings.startTime) appSettings.startTime = '07:00';
                             if(!appSettings.overtimeLogs) appSettings.overtimeLogs = {};
                             if(!appSettings.customShifts) appSettings.customShifts = {};
                             if(!appSettings.language) appSettings.language = 'id';
@@ -603,11 +642,10 @@
         };
 
         window.saveSettingsEvent = function() {
+            appSettings.startTime = document.getElementById('setting-start-time').value || '07:00';
             appSettings.endTime = document.getElementById('setting-end-time').value || '17:00';
             appSettings.theme = document.getElementById('setting-theme').value;
             appSettings.language = document.getElementById('setting-lang').value;
-            
-            document.getElementById('reg-time-display').innerText = `Reg: ${appSettings.endTime}`;
             
             applyTheme();
             updateStaticTexts();
@@ -679,27 +717,61 @@
         window.updateWorkdayCountdown = function() {
             const shiftText = document.getElementById('shift-countdown-text');
             const labelText = document.getElementById('shift-countdown-label');
+            const bar = document.getElementById('work-progress');
+            const startDisplay = document.getElementById('shift-start-display');
+            const endDisplay = document.getElementById('shift-end-display');
+            
             if (!shiftText || !labelText) return;
 
             const now = new Date();
             const todayStr = toYYYYMMDD(now);
             
-            let baselineTime = appSettings.endTime;
-            if (appSettings.customShifts[todayStr]) baselineTime = appSettings.customShifts[todayStr];
+            let shiftStart = appSettings.startTime || '07:00';
+            let shiftEnd = appSettings.endTime || '17:00';
             
-            const [regHr, regMin] = baselineTime.split(':').map(Number);
-            const endOfShift = new Date(now.getFullYear(), now.getMonth(), now.getDate(), regHr, regMin, 0);
+            if (appSettings.customShifts[todayStr]) {
+                const shiftData = appSettings.customShifts[todayStr];
+                if (typeof shiftData === 'string') {
+                    shiftEnd = shiftData;
+                } else {
+                    shiftStart = shiftData.start || shiftStart;
+                    shiftEnd = shiftData.end || shiftEnd;
+                }
+            }
             
-            const diffMs = endOfShift - now;
+            if (startDisplay) startDisplay.innerText = shiftStart;
+            if (endDisplay) endDisplay.innerText = shiftEnd;
+            
+            const [startHr, startMin] = shiftStart.split(':').map(Number);
+            const [endHr, endMin] = shiftEnd.split(':').map(Number);
+            
+            const startTimeObj = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startHr, startMin, 0);
+            let endTimeObj = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endHr, endMin, 0);
+            
+            if (endTimeObj <= startTimeObj) {
+                endTimeObj.setDate(endTimeObj.getDate() + 1);
+            }
+            
+            const diffMs = endTimeObj - now;
             
             if (diffMs > 0) {
-                const h = Math.floor(diffMs / (1000 * 60 * 60));
-                const m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                const s = Math.floor((diffMs % (1000 * 60)) / 1000);
+                let h = Math.floor(diffMs / (1000 * 60 * 60));
+                let m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                let s = Math.floor((diffMs % (1000 * 60)) / 1000);
                 
-                labelText.innerText = t('timeLeftLabel');
-                shiftText.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                shiftText.className = "text-2xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm";
+                if (now < startTimeObj) {
+                   const totalDuration = endTimeObj - startTimeObj;
+                   h = Math.floor(totalDuration / (1000 * 60 * 60));
+                   m = Math.floor((totalDuration % (1000 * 60 * 60)) / (1000 * 60));
+                   s = Math.floor((totalDuration % (1000 * 60)) / 1000);
+                   labelText.innerText = t('timeLeftLabel'); 
+                   shiftText.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                   shiftText.className = "text-2xl font-mono font-bold text-stone-400 tabular-nums tracking-tighter drop-shadow-sm transition-all";
+                } else {
+                   labelText.innerText = t('timeLeftLabel');
+                   shiftText.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                   shiftText.className = "text-2xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm transition-all";
+                }
             } else {
                 const overMs = Math.abs(diffMs);
                 const h = Math.floor(overMs / (1000 * 60 * 60));
@@ -708,7 +780,26 @@
                 
                 labelText.innerText = t('overtimeActiveLabel');
                 shiftText.innerText = `+${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                shiftText.className = "text-2xl font-mono font-bold text-rose-500 animate-pulse-fast tabular-nums tracking-tighter drop-shadow-sm";
+                shiftText.className = "text-2xl font-mono font-bold text-rose-500 animate-pulse-fast tabular-nums tracking-tighter drop-shadow-sm transition-all";
+            }
+            
+            if (bar) {
+                const totalMs = endTimeObj - startTimeObj;
+                let elapsedMs = now - startTimeObj;
+                if (elapsedMs < 0) elapsedMs = 0;
+                
+                let percent = (elapsedMs / totalMs) * 100;
+                let displayPercent = Math.min(100, percent);
+                
+                bar.style.width = displayPercent + '%';
+                
+                if (percent >= 100) {
+                    bar.className = 'absolute top-0 left-0 h-full rounded-full transition-all duration-1000 shadow-sm bg-rose-500';
+                } else if (percent > 80) {
+                    bar.className = 'absolute top-0 left-0 h-full rounded-full transition-all duration-1000 shadow-sm bg-amber-400';
+                } else {
+                    bar.className = 'absolute top-0 left-0 h-full rounded-full transition-all duration-1000 shadow-sm bg-teal-500';
+                }
             }
         }
 
@@ -744,6 +835,22 @@
                 const options = { weekday: 'long', day: 'numeric', month: 'long' };
                 nextHolidayText = new Date(status.nextHolidayStr).toLocaleDateString(localeStr, options);
             }
+
+            const shiftProgressHtml = `
+                <div class="w-full text-left mb-6">
+                    <div class="flex justify-between items-end mb-2 px-1">
+                        <p id="shift-countdown-label" class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest transition-colors">${t('timeLeftLabel')}</p>
+                        <p id="shift-countdown-text" class="text-2xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm">--:--:--</p>
+                    </div>
+                    <div class="h-2.5 w-full bg-stone-100 dark:bg-stone-700/50 rounded-full overflow-hidden relative border border-stone-200/50 dark:border-stone-800">
+                        <div id="work-progress" class="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 w-0 bg-teal-500 shadow-sm"></div>
+                    </div>
+                    <div class="flex justify-between mt-1.5 px-1">
+                        <span id="shift-start-display" class="text-[9px] font-bold text-stone-400">07:00</span>
+                        <span id="shift-end-display" class="text-[9px] font-bold text-stone-400">17:00</span>
+                    </div>
+                </div>
+            `;
 
             if (status.isHolidayToday) {
                 card.className = "rounded-[2rem] p-6 transition-all duration-500 relative overflow-hidden holiday-card-bg border-none min-h-[380px] h-full flex flex-col items-center justify-center shadow-lg";
@@ -796,12 +903,9 @@
                             <span class="text-stone-400 dark:text-stone-500 font-semibold text-xs tracking-wide">${status.totalCalendarDays} ${t('distanceDays')}</span>
                         </div>
                         
-                        <div class="flex flex-col space-y-5 w-full max-w-[280px] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
+                        <div class="flex flex-col w-full max-w-[280px] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
                             
-                            <div class="text-center">
-                                <p id="shift-countdown-label" class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 transition-colors">${t('timeLeftLabel')}</p>
-                                <p id="shift-countdown-text" class="text-2xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm">--:--:--</p>
-                            </div>
+                            ${shiftProgressHtml}
 
                             <div class="grid grid-cols-2 gap-4 w-full">
                                 <div class="text-center">
@@ -814,7 +918,7 @@
                                 </div>
                             </div>
 
-                            <div class="text-center pt-4 border-t border-stone-100 dark:border-stone-700">
+                            <div class="text-center pt-4 mt-5 border-t border-stone-100 dark:border-stone-700">
                                 <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1.5">${t('nextHolidayLabel')}</p>
                                 <p class="text-stone-700 dark:text-stone-200 font-bold text-sm">${nextHolidayText}</p>
                             </div>
@@ -826,7 +930,11 @@
                         <h2 class="text-2xl font-black text-stone-800 dark:text-white mb-2 tracking-tight opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards]">${t('noHolidayHeading')}</h2>
                         <p class="text-sm text-stone-500 dark:text-stone-400 max-w-[220px] leading-relaxed break-words opacity-0 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]">${t('noHolidayDesc')}</p>
                         
-                        <div class="mt-6 grid grid-cols-2 gap-4 w-full max-w-[280px] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
+                        <div class="mt-8 w-full max-w-[280px] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
+                            ${shiftProgressHtml}
+                        </div>
+
+                        <div class="mt-2 grid grid-cols-2 gap-4 w-full max-w-[280px] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.45s_forwards]">
                             <div class="text-center">
                                 <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">${t('overtimeLabel')}</p>
                                 <p class="text-teal-600 dark:text-teal-400 font-black text-xl leading-tight truncate drop-shadow-sm">${otTextStr}</p>
@@ -835,11 +943,6 @@
                                 <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">${t('salaryLabel')}</p>
                                 <p class="text-teal-600 dark:text-teal-400 font-black text-xl leading-tight truncate drop-shadow-sm">${formattedSalary}</p>
                             </div>
-                        </div>
-
-                        <div class="mt-6 w-full opacity-0 animate-[fadeInUp_0.6s_ease-out_0.45s_forwards]">
-                            <p id="shift-countdown-label" class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 transition-colors">${t('timeLeftLabel')}</p>
-                            <p id="shift-countdown-text" class="text-2xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm">--:--:--</p>
                         </div>
                     `;
                 }
@@ -887,13 +990,19 @@
             
             if(appSettings.customShifts[dateVal]) {
                 badge.classList.remove('hidden');
-                regDisplay.innerText = `Shift: ${appSettings.customShifts[dateVal]}`;
+                let shiftData = appSettings.customShifts[dateVal];
+                let s = typeof shiftData === 'string' ? '?' : shiftData.start;
+                let e = typeof shiftData === 'string' ? shiftData : shiftData.end;
+                
+                regDisplay.innerText = typeof shiftData === 'string' ? `Shift: ${e}` : `Shift: ${s}-${e}`;
                 regDisplay.classList.replace('bg-stone-100', 'bg-blue-100');
                 regDisplay.classList.replace('text-stone-400', 'text-blue-600');
                 regDisplay.classList.replace('dark:bg-stone-700', 'dark:bg-blue-900/50');
             } else {
                 badge.classList.add('hidden');
-                regDisplay.innerText = `Reg: ${appSettings.endTime}`;
+                const defaultS = appSettings.startTime || '07:00';
+                const defaultE = appSettings.endTime || '17:00';
+                regDisplay.innerText = `Reg: ${defaultS}-${defaultE}`;
                 regDisplay.classList.replace('bg-blue-100', 'bg-stone-100');
                 regDisplay.classList.replace('text-blue-600', 'text-stone-400');
                 regDisplay.classList.replace('dark:bg-blue-900/50', 'dark:bg-stone-700');
@@ -909,8 +1018,11 @@
                 return;
             }
 
-            let baselineTime = appSettings.endTime;
-            if (appSettings.customShifts[dateVal]) baselineTime = appSettings.customShifts[dateVal];
+            let baselineTime = appSettings.endTime || '17:00';
+            if (appSettings.customShifts[dateVal]) {
+                const shiftData = appSettings.customShifts[dateVal];
+                baselineTime = typeof shiftData === 'string' ? shiftData : shiftData.end;
+            }
 
             const [regHr, regMin] = baselineTime.split(':').map(Number);
             const [actHr, actMin] = timeVal.split(':').map(Number);
@@ -1007,17 +1119,23 @@
             
             if (appSettings.customShifts[dateStr]) {
                 deleteBtn.classList.remove('hidden'); 
-                const endStr = appSettings.customShifts[dateStr];
-                const [eHr, eMin] = endStr.split(':').map(Number);
-                let startHr = (eHr - 9 + 24) % 24;
-                document.getElementById('bubble-start-time').value = `${String(startHr).padStart(2,'0')}:${String(eMin).padStart(2,'0')}`;
-                document.getElementById('bubble-end-time').innerText = endStr;
+                const shiftData = appSettings.customShifts[dateStr];
+                
+                if (typeof shiftData === 'string') {
+                    // Backward compatibility logic
+                    const endStr = shiftData;
+                    const [eHr, eMin] = endStr.split(':').map(Number);
+                    let startHr = (eHr - 9 + 24) % 24;
+                    document.getElementById('bubble-start-time').value = `${String(startHr).padStart(2,'0')}:${String(eMin).padStart(2,'0')}`;
+                    document.getElementById('bubble-end-time').innerText = endStr;
+                } else {
+                    document.getElementById('bubble-start-time').value = shiftData.start;
+                    document.getElementById('bubble-end-time').innerText = shiftData.end;
+                }
             } else {
                 deleteBtn.classList.add('hidden'); 
-                const [regHr, regMin] = appSettings.endTime.split(':').map(Number);
-                let startHr = (regHr - 9 + 24) % 24;
-                document.getElementById('bubble-start-time').value = `${String(startHr).padStart(2,'0')}:${String(regMin).padStart(2,'0')}`;
-                document.getElementById('bubble-end-time').innerText = appSettings.endTime;
+                document.getElementById('bubble-start-time').value = appSettings.startTime || '07:00';
+                document.getElementById('bubble-end-time').innerText = appSettings.endTime || '17:00';
             }
             
             bubble.classList.remove('hidden');
@@ -1059,10 +1177,11 @@
             }, 10);
 
             document.getElementById('btn-save-shift').onclick = async () => {
+                const startStr = document.getElementById('bubble-start-time').value;
                 const endStr = document.getElementById('bubble-end-time').innerText;
                 if(endStr === '-') return;
                 
-                appSettings.customShifts[dateStr] = endStr;
+                appSettings.customShifts[dateStr] = { start: startStr, end: endStr };
                 closeShiftBubble();
                 
                 await syncWithLoading(() => {
@@ -1092,9 +1211,21 @@
         window.updateBubbleEndTime = function() {
             const val = document.getElementById('bubble-start-time').value;
             if(val) {
+                const [sH, sM] = (appSettings.startTime || '07:00').split(':').map(Number);
+                const [eH, eM] = (appSettings.endTime || '17:00').split(':').map(Number);
+                
+                let sTotal = sH * 60 + sM;
+                let eTotal = eH * 60 + eM;
+                if (eTotal < sTotal) eTotal += 24 * 60;
+                
+                const diffMins = eTotal - sTotal;
+                
                 const [hr, min] = val.split(':').map(Number);
-                const endHr = (hr + 9) % 24;
-                document.getElementById('bubble-end-time').innerText = `${String(endHr).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+                let newTotal = hr * 60 + min + diffMins;
+                const endHr = Math.floor(newTotal / 60) % 24;
+                const endMin = newTotal % 60;
+                
+                document.getElementById('bubble-end-time').innerText = `${String(endHr).padStart(2,'0')}:${String(endMin).padStart(2,'0')}`;
             } else {
                 document.getElementById('bubble-end-time').innerText = '-';
             }
@@ -1217,10 +1348,16 @@
                 btnContainer.appendChild(btn);
 
                 if(hasCustomShift) {
-                    const endStr = appSettings.customShifts[dateStr];
-                    const [eHr, eMin] = endStr.split(':').map(Number);
-                    const startHr = (eHr - 9 + 24) % 24;
-                    const startStr = `${String(startHr).padStart(2,'0')}:${String(eMin).padStart(2,'0')}`;
+                    let shiftData = appSettings.customShifts[dateStr];
+                    let startStr = '';
+                    if (typeof shiftData === 'string') {
+                        const endStr = shiftData;
+                        const [eHr, eMin] = endStr.split(':').map(Number);
+                        const startHr = (eHr - 9 + 24) % 24;
+                        startStr = `${String(startHr).padStart(2,'0')}:${String(eMin).padStart(2,'0')}`;
+                    } else {
+                        startStr = shiftData.start;
+                    }
                     
                     const badge = document.createElement('div');
                     let badgeClass = "absolute -bottom-[18px] left-1/2 -translate-x-1/2 text-[8px] sm:text-[9px] leading-none font-bold text-blue-600 bg-blue-100 dark:bg-blue-900/60 dark:text-blue-300 px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap z-20 pointer-events-none border border-blue-200/50 dark:border-blue-800/50";
