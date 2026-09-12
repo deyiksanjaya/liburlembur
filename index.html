@@ -321,7 +321,8 @@
                 workdayLabel: "Hari Kerja",
                 distanceDays: "Hari Jarak",
                 timeLeftLabel: "Sisa Waktu Kerja",
-                overtimeActiveLabel: "Lembur Berjalan",
+                shiftEnded: "Shift Selesai",
+                shiftEndedMsg: "Shift hari ini telah selesai 🎉",
                 noHolidayHeading: "Belum Ada Libur",
                 noHolidayDesc: "Tandai kalender untuk mulai menghitung mundur.",
                 lemburTitle: "Buku Lembur",
@@ -369,7 +370,8 @@
                 workdayLabel: "出勤日",
                 distanceDays: "日後",
                 timeLeftLabel: "定時までの残り",
-                overtimeActiveLabel: "残業時間",
+                shiftEnded: "勤務終了",
+                shiftEndedMsg: "お疲れ様でした♪",
                 noHolidayHeading: "休日未設定",
                 noHolidayDesc: "カレンダーで休日をマークしてください。",
                 lemburTitle: "残業帳",
@@ -723,8 +725,18 @@
             
             if (!shiftText || !labelText) return;
 
-            const now = new Date();
+            // Memanggil waktu langsung dari perangkat user
+            const now = new Date(); 
             const todayStr = toYYYYMMDD(now);
+            
+            // Cek pergantian hari (Midnight refresh bug fix)
+            if (!window.lastCheckedDateStr) window.lastCheckedDateStr = todayStr;
+            if (window.lastCheckedDateStr !== todayStr) {
+                window.lastCheckedDateStr = todayStr;
+                updateDashboard();
+                renderCalendar();
+                return; // updateDashboard akan memanggil fungsi ini lagi, jadi kita return
+            }
             
             let shiftStart = appSettings.startTime || '07:00';
             let shiftEnd = appSettings.endTime || '17:00';
@@ -755,55 +767,50 @@
             }
             
             const diffMs = endTimeObj - now;
+            const totalMs = endTimeObj - startTimeObj;
+            let elapsedMs = now - startTimeObj;
+            
+            if (elapsedMs < 0) elapsedMs = 0; // Jika sebelum shift
             
             if (diffMs > 0) {
-                let h = Math.floor(diffMs / (1000 * 60 * 60));
-                let m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                let s = Math.floor((diffMs % (1000 * 60)) / 1000);
-                
+                let h, m, s;
                 if (now < startTimeObj) {
                    // Shift belum mulai, hitung durasi full shift-nya
-                   const totalDuration = endTimeObj - startTimeObj;
-                   h = Math.floor(totalDuration / (1000 * 60 * 60));
-                   m = Math.floor((totalDuration % (1000 * 60 * 60)) / (1000 * 60));
-                   s = Math.floor((totalDuration % (1000 * 60)) / 1000);
+                   h = Math.floor(totalMs / (1000 * 60 * 60));
+                   m = Math.floor((totalMs % (1000 * 60 * 60)) / (1000 * 60));
+                   s = Math.floor((totalMs % (1000 * 60)) / 1000);
                    labelText.innerText = t('timeLeftLabel'); 
                    shiftText.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
                    shiftText.className = "text-2xl sm:text-3xl font-mono font-bold text-stone-400 tabular-nums tracking-tighter drop-shadow-sm transition-all";
                 } else {
                    // Shift sedang berlangsung
+                   h = Math.floor(diffMs / (1000 * 60 * 60));
+                   m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                   s = Math.floor((diffMs % (1000 * 60)) / 1000);
                    labelText.innerText = t('timeLeftLabel');
                    shiftText.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
                    shiftText.className = "text-2xl sm:text-3xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm transition-all";
                 }
+
+                // Progress Bar Bergerak
+                if (bar) {
+                    let percent = (elapsedMs / totalMs) * 100;
+                    bar.style.width = percent + '%';
+                    
+                    if (percent > 80) {
+                        bar.className = 'absolute top-0 left-0 h-full rounded-full transition-all duration-1000 bg-amber-400 shadow-sm';
+                    } else {
+                        bar.className = 'absolute top-0 left-0 h-full rounded-full transition-all duration-1000 bg-teal-500 shadow-sm';
+                    }
+                }
             } else {
-                // Shift sudah lewat, saatnya overtime / lembur
-                const overMs = Math.abs(diffMs);
-                const h = Math.floor(overMs / (1000 * 60 * 60));
-                const m = Math.floor((overMs % (1000 * 60 * 60)) / (1000 * 60));
-                const s = Math.floor((overMs % (1000 * 60)) / 1000);
+                // Shift sudah selesai, berhenti dan tampilkan pesan
+                labelText.innerText = "";
+                shiftText.innerText = t('shiftEndedMsg');
+                shiftText.className = "text-sm sm:text-base font-bold text-teal-600 dark:text-teal-400 drop-shadow-sm transition-all mt-1";
                 
-                labelText.innerText = t('overtimeActiveLabel');
-                shiftText.innerText = `+${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                shiftText.className = "text-2xl sm:text-3xl font-mono font-bold text-rose-500 animate-pulse-fast tabular-nums tracking-tighter drop-shadow-sm transition-all";
-            }
-            
-            // Progress Bar Logic
-            if (bar) {
-                const totalMs = endTimeObj - startTimeObj;
-                let elapsedMs = now - startTimeObj;
-                if (elapsedMs < 0) elapsedMs = 0; // Jika sebelum shift, progress 0
-                
-                let percent = (elapsedMs / totalMs) * 100;
-                let displayPercent = Math.min(100, percent);
-                
-                bar.style.width = displayPercent + '%';
-                
-                if (percent >= 100) {
-                    bar.className = 'absolute top-0 left-0 h-full rounded-full transition-all duration-1000 bg-rose-500 shadow-sm';
-                } else if (percent > 80) {
-                    bar.className = 'absolute top-0 left-0 h-full rounded-full transition-all duration-1000 bg-amber-400 shadow-sm';
-                } else {
+                if (bar) {
+                    bar.style.width = '100%';
                     bar.className = 'absolute top-0 left-0 h-full rounded-full transition-all duration-1000 bg-teal-500 shadow-sm';
                 }
             }
@@ -842,7 +849,6 @@
                 nextHolidayText = new Date(status.nextHolidayStr).toLocaleDateString(localeStr, options);
             }
             
-            // HTML untuk blok Shift Bar (Sekarang memiliki div wrapper semi-transparan untuk menyesuaikan tema dashboard)
             const shiftProgressHtml = `
                 <div class="mb-5 bg-white/40 dark:bg-black/20 rounded-2xl p-4 border border-stone-100/50 dark:border-stone-700/50 relative overflow-hidden shadow-sm backdrop-blur-sm">
                     <div class="flex justify-between items-end mb-2.5 relative z-10">
@@ -897,7 +903,7 @@
                 progressInterval = setInterval(updateProgressBar, 1000); 
             } else {
                 
-                // Tema Gradual Berdasarkan Sisa Hari Kerja (Transisi Putih ke Hijau)
+                // Tema Gradual Berdasarkan Sisa Hari Kerja (Transisi Murni Putih ke Hijau)
                 let cardBgClass = "bg-white dark:bg-stone-800 border-stone-100 dark:border-stone-700";
                 
                 if (status.nextHolidayStr) {
@@ -1291,6 +1297,7 @@
                 const isHoliday = selectedDates.includes(dateStr);
                 const isYukyu = yukyuDates.includes(dateStr);
                 const hasCustomShift = appSettings.customShifts[dateStr] !== undefined;
+                const isToday = dateStr === todayStr;
                 
                 const btnContainer = document.createElement('div');
                 btnContainer.className = "flex justify-center relative";
@@ -1322,6 +1329,10 @@
                 
                 if (isEditMode && !isHoliday && !isYukyu) {
                     baseClasses += " hover:border-stone-300 dark:hover:border-stone-600 bg-stone-50 dark:bg-stone-900/50 cursor-pointer";
+                }
+                
+                if (isToday) {
+                    baseClasses += " ring-2 ring-teal-500 ring-offset-2 dark:ring-offset-stone-800 ";
                 }
 
                 btn.className = baseClasses;
