@@ -48,8 +48,8 @@
             appearance: none;
         }
         
-        .holiday-card-bg { background: linear-gradient(135deg, #fef08a 0%, #fed7aa 100%); }
-        .dark .holiday-card-bg { background: linear-gradient(135deg, #78350f 0%, #9a3412 100%); }
+        .holiday-card-bg { background: linear-gradient(135deg, #a7f3d0 0%, #34d399 100%); }
+        .dark .holiday-card-bg { background: linear-gradient(135deg, #064e3b 0%, #065f46 100%); }
 
         @keyframes sunSpinBreathe {
             0% { transform: rotate(0deg) scale(1); }
@@ -729,6 +729,7 @@
             let shiftStart = appSettings.startTime || '07:00';
             let shiftEnd = appSettings.endTime || '17:00';
             
+            // Periksa apakah ada shift khusus untuk hari ini
             if (appSettings.customShifts[todayStr]) {
                 const shiftData = appSettings.customShifts[todayStr];
                 if (typeof shiftData === 'string') {
@@ -748,6 +749,7 @@
             const startTimeObj = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startHr, startMin, 0);
             let endTimeObj = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endHr, endMin, 0);
             
+            // Jika jam end kurang dari jam start, berarti lewat tengah malam
             if (endTimeObj <= startTimeObj) {
                 endTimeObj.setDate(endTimeObj.getDate() + 1);
             }
@@ -760,19 +762,22 @@
                 let s = Math.floor((diffMs % (1000 * 60)) / 1000);
                 
                 if (now < startTimeObj) {
+                   // Shift belum mulai, hitung durasi full shift-nya
                    const totalDuration = endTimeObj - startTimeObj;
                    h = Math.floor(totalDuration / (1000 * 60 * 60));
                    m = Math.floor((totalDuration % (1000 * 60 * 60)) / (1000 * 60));
                    s = Math.floor((totalDuration % (1000 * 60)) / 1000);
                    labelText.innerText = t('timeLeftLabel'); 
                    shiftText.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                   shiftText.className = "text-2xl font-mono font-bold text-stone-400 tabular-nums tracking-tighter drop-shadow-sm transition-all";
+                   shiftText.className = "text-2xl sm:text-3xl font-mono font-bold text-stone-400 tabular-nums tracking-tighter drop-shadow-sm transition-all";
                 } else {
+                   // Shift sedang berlangsung
                    labelText.innerText = t('timeLeftLabel');
                    shiftText.innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                   shiftText.className = "text-2xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm transition-all";
+                   shiftText.className = "text-2xl sm:text-3xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm transition-all";
                 }
             } else {
+                // Shift sudah lewat, saatnya overtime / lembur
                 const overMs = Math.abs(diffMs);
                 const h = Math.floor(overMs / (1000 * 60 * 60));
                 const m = Math.floor((overMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -780,13 +785,14 @@
                 
                 labelText.innerText = t('overtimeActiveLabel');
                 shiftText.innerText = `+${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                shiftText.className = "text-2xl font-mono font-bold text-rose-500 animate-pulse-fast tabular-nums tracking-tighter drop-shadow-sm transition-all";
+                shiftText.className = "text-2xl sm:text-3xl font-mono font-bold text-rose-500 animate-pulse-fast tabular-nums tracking-tighter drop-shadow-sm transition-all";
             }
             
+            // Progress Bar Logic
             if (bar) {
                 const totalMs = endTimeObj - startTimeObj;
                 let elapsedMs = now - startTimeObj;
-                if (elapsedMs < 0) elapsedMs = 0;
+                if (elapsedMs < 0) elapsedMs = 0; // Jika sebelum shift, progress 0
                 
                 let percent = (elapsedMs / totalMs) * 100;
                 let displayPercent = Math.min(100, percent);
@@ -794,11 +800,11 @@
                 bar.style.width = displayPercent + '%';
                 
                 if (percent >= 100) {
-                    bar.className = 'absolute top-0 left-0 h-full rounded-full transition-all duration-1000 shadow-sm bg-rose-500';
+                    bar.className = 'absolute top-0 left-0 h-full rounded-full transition-all duration-1000 bg-rose-500 shadow-sm';
                 } else if (percent > 80) {
-                    bar.className = 'absolute top-0 left-0 h-full rounded-full transition-all duration-1000 shadow-sm bg-amber-400';
+                    bar.className = 'absolute top-0 left-0 h-full rounded-full transition-all duration-1000 bg-amber-400 shadow-sm';
                 } else {
-                    bar.className = 'absolute top-0 left-0 h-full rounded-full transition-all duration-1000 shadow-sm bg-teal-500';
+                    bar.className = 'absolute top-0 left-0 h-full rounded-full transition-all duration-1000 bg-teal-500 shadow-sm';
                 }
             }
         }
@@ -835,19 +841,22 @@
                 const options = { weekday: 'long', day: 'numeric', month: 'long' };
                 nextHolidayText = new Date(status.nextHolidayStr).toLocaleDateString(localeStr, options);
             }
-
+            
+            // HTML untuk blok Shift Bar (Sekarang memiliki div wrapper semi-transparan untuk menyesuaikan tema dashboard)
             const shiftProgressHtml = `
-                <div class="w-full text-left mb-6">
-                    <div class="flex justify-between items-end mb-2 px-1">
-                        <p id="shift-countdown-label" class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest transition-colors">${t('timeLeftLabel')}</p>
-                        <p id="shift-countdown-text" class="text-2xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm">--:--:--</p>
+                <div class="mb-5 bg-white/40 dark:bg-black/20 rounded-2xl p-4 border border-stone-100/50 dark:border-stone-700/50 relative overflow-hidden shadow-sm backdrop-blur-sm">
+                    <div class="flex justify-between items-end mb-2.5 relative z-10">
+                        <div class="text-left">
+                            <p id="shift-countdown-label" class="text-[9px] text-stone-500 dark:text-stone-400 font-bold uppercase tracking-widest mb-1 transition-colors">${t('timeLeftLabel')}</p>
+                            <p id="shift-countdown-text" class="text-2xl sm:text-3xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm transition-all">--:--:--</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[8px] text-stone-400 font-bold uppercase tracking-widest mb-1">Shift</p>
+                            <p class="text-[11px] font-bold text-stone-600 dark:text-stone-300"><span id="shift-start-display"></span> - <span id="shift-end-display"></span></p>
+                        </div>
                     </div>
-                    <div class="h-2.5 w-full bg-stone-100 dark:bg-stone-700/50 rounded-full overflow-hidden relative border border-stone-200/50 dark:border-stone-800">
+                    <div class="h-2 w-full bg-black/5 dark:bg-white/10 rounded-full overflow-hidden relative z-10">
                         <div id="work-progress" class="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 w-0 bg-teal-500 shadow-sm"></div>
-                    </div>
-                    <div class="flex justify-between mt-1.5 px-1">
-                        <span id="shift-start-display" class="text-[9px] font-bold text-stone-400">07:00</span>
-                        <span id="shift-end-display" class="text-[9px] font-bold text-stone-400">17:00</span>
                     </div>
                 </div>
             `;
@@ -856,38 +865,58 @@
                 card.className = "rounded-[2rem] p-6 transition-all duration-500 relative overflow-hidden holiday-card-bg border-none min-h-[380px] h-full flex flex-col items-center justify-center shadow-lg";
                 content.innerHTML = `
                     <div class="text-6xl animate-sun mb-3 drop-shadow-sm select-none opacity-0 animate-[fadeInUp_0.6s_ease-out_0.1s_forwards]">🔆</div>
-                    <h2 class="text-3xl font-extrabold text-orange-900 dark:text-orange-100 tracking-tight drop-shadow-sm mb-5 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards]">${t('holidayTitle')}</h2>
+                    <h2 class="text-3xl font-extrabold text-emerald-900 dark:text-emerald-50 tracking-tight drop-shadow-sm mb-5 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards]">${t('holidayTitle')}</h2>
                     
                     <div class="w-full max-w-[80%] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]">
                         <div class="h-1.5 w-full bg-black/10 dark:bg-white/10 rounded-full overflow-hidden relative">
                             <div id="holiday-progress" class="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 w-0 bg-emerald-500 shadow-sm"></div>
                         </div>
-                        <div id="holiday-footnote" class="text-xs font-mono font-bold mt-3 text-center tracking-wide break-words text-emerald-700 dark:text-emerald-300">...</div>
+                        <div id="holiday-footnote" class="text-xs font-mono font-bold mt-3 text-center tracking-wide break-words text-emerald-800 dark:text-emerald-200">...</div>
                     </div>
 
                     <div class="mt-8 flex flex-col items-center space-y-5 w-full opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
                         <div class="flex justify-around w-full max-w-[280px]">
                             <div class="text-center">
-                                <p class="text-[10px] text-orange-800/70 dark:text-orange-200/70 font-bold uppercase tracking-widest mb-1">${t('overtimeLabel')}</p>
-                                <p class="text-orange-900 dark:text-orange-100 font-black text-xl">${otTextStr}</p>
+                                <p class="text-[10px] text-emerald-800/70 dark:text-emerald-100/70 font-bold uppercase tracking-widest mb-1">${t('overtimeLabel')}</p>
+                                <p class="text-emerald-900 dark:text-emerald-50 font-black text-xl">${otTextStr}</p>
                             </div>
-                            <div class="text-center border-l border-orange-900/10 dark:border-orange-100/10 pl-6">
-                                <p class="text-[10px] text-orange-800/70 dark:text-orange-200/70 font-bold uppercase tracking-widest mb-1">${t('salaryLabel')}</p>
-                                <p class="text-orange-900 dark:text-orange-100 font-black text-xl">${formattedSalary}</p>
+                            <div class="text-center border-l border-emerald-900/10 dark:border-emerald-100/10 pl-6">
+                                <p class="text-[10px] text-emerald-800/70 dark:text-emerald-100/70 font-bold uppercase tracking-widest mb-1">${t('salaryLabel')}</p>
+                                <p class="text-emerald-900 dark:text-emerald-50 font-black text-xl">${formattedSalary}</p>
                             </div>
                         </div>
                         
                         <div class="text-center bg-white/20 dark:bg-black/20 px-6 py-3 rounded-2xl w-full max-w-[280px] shadow-sm">
-                            <p class="text-[9px] text-orange-800/70 dark:text-orange-200/70 font-bold uppercase tracking-widest mb-1">${t('nextHolidayLabel')}</p>
-                            <p class="text-orange-900 dark:text-orange-100 font-bold text-sm truncate">${nextHolidayText}</p>
-                            ${status.nextHolidayStr ? `<div class="mt-2 inline-block bg-orange-900/10 dark:bg-orange-100/10 px-2 py-0.5 rounded text-[10px] font-bold text-orange-800 dark:text-orange-200 border border-orange-900/5 dark:border-orange-100/5 shadow-sm">Jarak: ${status.workingDaysLeft} ${t('workdayLabel')}</div>` : ''}
+                            <p class="text-[9px] text-emerald-800/70 dark:text-emerald-100/70 font-bold uppercase tracking-widest mb-1">${t('nextHolidayLabel')}</p>
+                            <p class="text-emerald-900 dark:text-emerald-50 font-bold text-sm truncate">${nextHolidayText}</p>
+                            ${status.nextHolidayStr ? `<div class="mt-2 inline-block bg-emerald-900/10 dark:bg-emerald-100/10 px-2 py-0.5 rounded text-[10px] font-bold text-emerald-800 dark:text-emerald-100 border border-emerald-900/5 dark:border-emerald-100/5 shadow-sm">Jarak: ${status.workingDaysLeft} ${t('workdayLabel')}</div>` : ''}
                         </div>
                     </div>
                 `;
                 updateProgressBar();
                 progressInterval = setInterval(updateProgressBar, 1000); 
             } else {
-                card.className = "rounded-[2rem] p-6 transition-all duration-500 relative overflow-hidden bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700 shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-h-[380px] h-full flex flex-col items-center justify-center";
+                
+                // Tema Gradual Berdasarkan Sisa Hari Kerja (Transisi Putih ke Hijau)
+                let cardBgClass = "bg-white dark:bg-stone-800 border-stone-100 dark:border-stone-700";
+                
+                if (status.nextHolidayStr) {
+                    if (status.workingDaysLeft <= 1) {
+                        // H-1: Hijau Kuat (Strong Green)
+                        cardBgClass = "bg-gradient-to-br from-emerald-100 to-emerald-300 dark:from-emerald-800/60 dark:to-emerald-700/70 border-emerald-300 dark:border-emerald-600";
+                    } else if (status.workingDaysLeft <= 3) {
+                        // H-3: Hijau Medium (Medium Green)
+                        cardBgClass = "bg-gradient-to-br from-emerald-50 to-emerald-200/80 dark:from-emerald-900/40 dark:to-emerald-800/50 border-emerald-200 dark:border-emerald-700/60";
+                    } else if (status.workingDaysLeft <= 7) {
+                        // H-7: Hijau Muda (Light Green)
+                        cardBgClass = "bg-gradient-to-br from-stone-50 to-emerald-100/80 dark:from-stone-800 dark:to-emerald-900/30 border-emerald-100/50 dark:border-emerald-800/40";
+                    } else if (status.workingDaysLeft <= 14) {
+                        // H-14: Hint hijau tipis di ujung (Hint of Green)
+                        cardBgClass = "bg-gradient-to-br from-white to-emerald-50/50 dark:from-stone-800 dark:to-emerald-900/10 border-stone-100 dark:border-stone-700";
+                    }
+                }
+
+                card.className = `rounded-[2rem] p-6 transition-all duration-1000 relative overflow-hidden border shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-h-[380px] h-full flex flex-col items-center justify-center ${cardBgClass}`;
                 
                 if (status.nextHolidayStr) {
                     content.innerHTML = `
@@ -965,10 +994,10 @@
 
             bar.style.width = percent + '%';
             let colorClass = 'bg-emerald-400';
-            let textColor = 'text-emerald-600 dark:text-emerald-400';
+            let textColor = 'text-emerald-700 dark:text-emerald-300';
             
-            if (percent >= 50 && percent < 80) { colorClass = 'bg-amber-400'; textColor = 'text-amber-700 dark:text-amber-400'; }
-            else if (percent >= 80) { colorClass = 'bg-rose-500'; textColor = 'text-rose-700 dark:text-rose-400'; }
+            if (percent >= 50 && percent < 80) { colorClass = 'bg-amber-400'; textColor = 'text-amber-800 dark:text-amber-300'; }
+            else if (percent >= 80) { colorClass = 'bg-rose-500'; textColor = 'text-rose-800 dark:text-rose-300'; }
 
             bar.className = `absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ${colorClass}`;
             
