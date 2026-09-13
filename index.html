@@ -849,25 +849,22 @@
     const isHolidayToday = selectedDates.includes(todayStr) || yukyuDates.includes(todayStr);
 
     let workingDaysLeft = 0;
-    let calendarDaysLeft = 0;
     let nextHolidayStr = null;
+    
+    // Kita selalu mulai menghitung dari BESOK, karena HARI INI dianggap sedang dijalani (di luar hitungan sisa).
     let checkDate = new Date(today);
+    checkDate.setDate(checkDate.getDate() + 1);
 
     if (isHolidayToday) {
-        // Jika hari ini libur, lewati semua libur beruntun untuk mencari hari kerja berikutnya
+        // Jika hari ini libur, lewati semua libur beruntun untuk mencari hari kerja pertama
         while (selectedDates.includes(toYYYYMMDD(checkDate)) || yukyuDates.includes(toYYYYMMDD(checkDate))) {
             checkDate.setDate(checkDate.getDate() + 1);
         }
-    } else {
-        // PERBAIKAN: Jika hari ini HARI KERJA, jangan masukkan hari ini ke hitungan "sisa kali kerja".
-        // Karena hari ini sedang dijalani (cukup patokan pada timer countdown shift di dashboard).
-        checkDate.setDate(checkDate.getDate() + 1);
-        calendarDaysLeft = 1; // Tandai bahwa kita sudah melompat 1 hari ke depan
     }
 
     let tempDate = new Date(checkDate);
     // Cari jadwal sampai maksimal 1 tahun ke depan
-    while (calendarDaysLeft < 365) { 
+    for (let i = 0; i < 365; i++) {
         const dStr = toYYYYMMDD(tempDate);
         if (selectedDates.includes(dStr) || yukyuDates.includes(dStr)) {
             nextHolidayStr = dStr;
@@ -875,18 +872,26 @@
         } else {
             workingDaysLeft++;
         }
-        calendarDaysLeft++;
         tempDate.setDate(tempDate.getDate() + 1);
     }
 
     let totalCalendarDays = 0;
     if (nextHolidayStr) {
         const nextHDate = new Date(nextHolidayStr);
-        totalCalendarDays = Math.ceil((nextHDate - today) / (1000 * 60 * 60 * 24));
+        // Karena "Kali Kerja" menghitung dari besok, maka "Hari Menuju Libur" 
+        // juga dihitung dari besok agar angkanya sinkron dan tidak ada selisih.
+        let tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        totalCalendarDays = Math.round((nextHDate - tomorrow) / (1000 * 60 * 60 * 24));
+        
+        // Fallback aman agar tidak minus
+        if (totalCalendarDays < 0) totalCalendarDays = 0; 
     }
 
     return { isHolidayToday, workingDaysLeft, totalCalendarDays, nextHolidayStr };
 }
+
 
 
         window.updateWorkdayCountdown = function() {
