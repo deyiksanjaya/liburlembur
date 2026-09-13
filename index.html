@@ -841,7 +841,7 @@
             return `${y}-${m}-${d}`;
         }
 
-        function calculateStatus() {
+   function calculateStatus() {
     const today = new Date();
     today.setHours(0,0,0,0);
     const todayStr = toYYYYMMDD(today);
@@ -853,14 +853,20 @@
     let nextHolidayStr = null;
     let checkDate = new Date(today);
 
-    // Jika hari ini libur, lewati hari-hari libur beruntun ke hari kerja berikutnya
     if (isHolidayToday) {
+        // Jika hari ini libur, lewati semua libur beruntun untuk mencari hari kerja berikutnya
         while (selectedDates.includes(toYYYYMMDD(checkDate)) || yukyuDates.includes(toYYYYMMDD(checkDate))) {
             checkDate.setDate(checkDate.getDate() + 1);
         }
+    } else {
+        // PERBAIKAN: Jika hari ini HARI KERJA, jangan masukkan hari ini ke hitungan "sisa kali kerja".
+        // Karena hari ini sedang dijalani (cukup patokan pada timer countdown shift di dashboard).
+        checkDate.setDate(checkDate.getDate() + 1);
+        calendarDaysLeft = 1; // Tandai bahwa kita sudah melompat 1 hari ke depan
     }
 
     let tempDate = new Date(checkDate);
+    // Cari jadwal sampai maksimal 1 tahun ke depan
     while (calendarDaysLeft < 365) { 
         const dStr = toYYYYMMDD(tempDate);
         if (selectedDates.includes(dStr) || yukyuDates.includes(dStr)) {
@@ -873,41 +879,6 @@
         tempDate.setDate(tempDate.getDate() + 1);
     }
 
-    // --- PERBAIKAN LOGIKA SHIFT ---
-    // Jika hari ini bukan hari libur, cek apakah shift hari ini sudah selesai.
-    if (!isHolidayToday && workingDaysLeft > 0) {
-        const now = new Date();
-        let baselineStart = appSettings.startTime || '07:00';
-        let baselineEnd = appSettings.endTime || '17:00';
-        
-        // Cek apakah ada shift khusus (custom shift) hari ini
-        if (appSettings.customShifts[todayStr]) {
-            const shiftData = appSettings.customShifts[todayStr];
-            if (typeof shiftData === 'string') {
-                baselineEnd = shiftData;
-            } else {
-                baselineStart = shiftData.start || baselineStart;
-                baselineEnd = shiftData.end || baselineEnd;
-            }
-        }
-        
-        const [startHr, startMin] = baselineStart.split(':').map(Number);
-        const [endHr, endMin] = baselineEnd.split(':').map(Number);
-        
-        let startOfShift = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startHr, startMin, 0);
-        let endOfShift = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endHr, endMin, 0);
-        
-        // Sesuaikan jika shift malam (melewati tengah malam / lintas hari)
-        if (endOfShift <= startOfShift) {
-            endOfShift.setDate(endOfShift.getDate() + 1); 
-        }
-        
-        // Jika waktu saat ini sudah melewati jam pulang, kurangi 1 kali kerja
-        if (now >= endOfShift) {
-            workingDaysLeft--;
-        }
-    }
-
     let totalCalendarDays = 0;
     if (nextHolidayStr) {
         const nextHDate = new Date(nextHolidayStr);
@@ -916,6 +887,7 @@
 
     return { isHolidayToday, workingDaysLeft, totalCalendarDays, nextHolidayStr };
 }
+
 
         window.updateWorkdayCountdown = function() {
             const shiftText = document.getElementById('shift-countdown-text');
