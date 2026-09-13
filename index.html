@@ -969,154 +969,155 @@
         }
 
         function updateDashboard() {
-            const card = document.getElementById('main-card');
-            const content = document.getElementById('dashboard-content');
-            if(!card || !content) return;
+    const card = document.getElementById('main-card');
+    const content = document.getElementById('dashboard-content');
+    if(!card || !content) return;
+    
+    const status = calculateStatus();
+    if (progressInterval) clearInterval(progressInterval);
+
+    const today = new Date();
+    const currentYearMonth = toYYYYMMDD(today).substring(0, 7); 
+    let totalMinsThisMonth = 0;
+    if(appSettings.overtimeLogs) {
+        Object.keys(appSettings.overtimeLogs).forEach(dateKey => {
+            if (dateKey.startsWith(currentYearMonth)) totalMinsThisMonth += appSettings.overtimeLogs[dateKey].mins;
+        });
+    }
+    const otHours = Math.floor(totalMinsThisMonth / 60);
+    const otMins = totalMinsThisMonth % 60;
+    const otTextStr = `${otHours > 0 ? otHours + 'j' : ''} ${otMins > 0 ? otMins + 'm' : ''}`.trim() || `0 j`;
+    
+    const holidaysThisMonth = selectedDates.filter(d => d.startsWith(currentYearMonth)).length;
+    const baseSalary = 120000 + ((9 - holidaysThisMonth) * 10000);
+    const overtimeSalary = (totalMinsThisMonth / 60) * 1000;
+    const totalSalary = Math.round(baseSalary + overtimeSalary);
+    const formattedSalary = formatYen(totalSalary);
+
+    let nextHolidayText = 'Belum Ada';
+    if(status.nextHolidayStr) {
+        const localeStr = appSettings.language === 'ja' ? 'ja-JP' : 'id-ID';
+        const options = { weekday: 'long', day: 'numeric', month: 'long' };
+        nextHolidayText = new Date(status.nextHolidayStr).toLocaleDateString(localeStr, options);
+    }
+
+    if (status.isHolidayToday) {
+        card.className = "rounded-[2rem] p-6 transition-all duration-500 relative overflow-hidden holiday-card-bg border-none min-h-[380px] h-full flex flex-col items-center justify-center shadow-lg";
+        content.innerHTML = `
+            <div class="text-6xl animate-sun mb-3 drop-shadow-sm select-none opacity-0 animate-[fadeInUp_0.6s_ease-out_0.1s_forwards]">🔆</div>
+            <h2 class="text-3xl font-extrabold text-emerald-900 dark:text-emerald-50 tracking-tight drop-shadow-sm mb-5 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards]">${t('holidayTitle')}</h2>
             
-            const status = calculateStatus();
-            if (progressInterval) clearInterval(progressInterval);
+            <div class="w-full max-w-[80%] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]">
+                <div class="h-1.5 w-full bg-black/10 dark:bg-white/10 rounded-full overflow-hidden relative">
+                    <div id="holiday-progress" class="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 w-0 bg-emerald-500 shadow-sm"></div>
+                </div>
+                <div id="holiday-footnote" class="text-xs font-mono font-bold mt-3 text-center tracking-wide break-words text-emerald-800 dark:text-emerald-200">...</div>
+            </div>
 
-            const today = new Date();
-            const currentYearMonth = toYYYYMMDD(today).substring(0, 7); 
-            let totalMinsThisMonth = 0;
-            if(appSettings.overtimeLogs) {
-                Object.keys(appSettings.overtimeLogs).forEach(dateKey => {
-                    if (dateKey.startsWith(currentYearMonth)) totalMinsThisMonth += appSettings.overtimeLogs[dateKey].mins;
-                });
-            }
-            const otHours = Math.floor(totalMinsThisMonth / 60);
-            const otMins = totalMinsThisMonth % 60;
-            const otTextStr = `${otHours > 0 ? otHours + 'j' : ''} ${otMins > 0 ? otMins + 'm' : ''}`.trim() || `0 j`;
-            
-            const holidaysThisMonth = selectedDates.filter(d => d.startsWith(currentYearMonth)).length;
-            const baseSalary = 120000 + ((9 - holidaysThisMonth) * 10000);
-            const overtimeSalary = (totalMinsThisMonth / 60) * 1000;
-            const totalSalary = Math.round(baseSalary + overtimeSalary);
-            const formattedSalary = formatYen(totalSalary);
-
-            let nextHolidayText = 'Belum Ada';
-            if(status.nextHolidayStr) {
-                const localeStr = appSettings.language === 'ja' ? 'ja-JP' : 'id-ID';
-                const options = { weekday: 'long', day: 'numeric', month: 'long' };
-                nextHolidayText = new Date(status.nextHolidayStr).toLocaleDateString(localeStr, options);
-            }
-
-            if (status.isHolidayToday) {
-                card.className = "rounded-[2rem] p-6 transition-all duration-500 relative overflow-hidden holiday-card-bg border-none min-h-[380px] h-full flex flex-col items-center justify-center shadow-lg";
-                content.innerHTML = `
-                    <div class="text-6xl animate-sun mb-3 drop-shadow-sm select-none opacity-0 animate-[fadeInUp_0.6s_ease-out_0.1s_forwards]">🔆</div>
-                    <h2 class="text-3xl font-extrabold text-emerald-900 dark:text-emerald-50 tracking-tight drop-shadow-sm mb-5 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards]">${t('holidayTitle')}</h2>
-                    
-                    <div class="w-full max-w-[80%] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]">
-                        <div class="h-1.5 w-full bg-black/10 dark:bg-white/10 rounded-full overflow-hidden relative">
-                            <div id="holiday-progress" class="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 w-0 bg-emerald-500 shadow-sm"></div>
-                        </div>
-                        <div id="holiday-footnote" class="text-xs font-mono font-bold mt-3 text-center tracking-wide break-words text-emerald-800 dark:text-emerald-200">...</div>
+            <div class="mt-8 flex flex-col items-center space-y-5 w-full opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
+                <div class="flex justify-around w-full max-w-[280px]">
+                    <div class="text-center">
+                        <p class="text-[10px] text-emerald-800/70 dark:text-emerald-100/70 font-bold uppercase tracking-widest mb-1">${t('overtimeLabel')}</p>
+                        <p class="text-emerald-900 dark:text-emerald-50 font-black text-xl">${otTextStr}</p>
                     </div>
-
-                    <div class="mt-8 flex flex-col items-center space-y-5 w-full opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
-                        <div class="flex justify-around w-full max-w-[280px]">
-                            <div class="text-center">
-                                <p class="text-[10px] text-emerald-800/70 dark:text-emerald-100/70 font-bold uppercase tracking-widest mb-1">${t('overtimeLabel')}</p>
-                                <p class="text-emerald-900 dark:text-emerald-50 font-black text-xl">${otTextStr}</p>
-                            </div>
-                            <div class="text-center border-l border-emerald-900/10 dark:border-emerald-100/10 pl-6">
-                                <p class="text-[10px] text-emerald-800/70 dark:text-emerald-100/70 font-bold uppercase tracking-widest mb-1">${t('salaryLabel')}</p>
-                                <p class="text-emerald-900 dark:text-emerald-50 font-black text-xl">${formattedSalary}</p>
-                            </div>
-                        </div>
-                        
-                        <div class="text-center bg-white/20 dark:bg-black/20 px-6 py-3 rounded-2xl w-full max-w-[280px] shadow-sm">
-                            <p class="text-[9px] text-emerald-800/70 dark:text-emerald-100/70 font-bold uppercase tracking-widest mb-1">${t('nextHolidayLabel')}</p>
-                            <p class="text-emerald-900 dark:text-emerald-50 font-bold text-sm truncate">${nextHolidayText}</p>
-                            ${status.nextHolidayStr ? `<div class="mt-2 inline-block bg-emerald-900/10 dark:bg-emerald-100/10 px-2 py-0.5 rounded text-[10px] font-bold text-emerald-800 dark:text-emerald-100 border border-emerald-900/5 dark:border-emerald-100/5 shadow-sm">Sisa: ${status.workingDaysLeft} ${t('workdayLabel')}</div>` : ''}
-                        </div>
+                    <div class="text-center border-l border-emerald-900/10 dark:border-emerald-100/10 pl-6">
+                        <p class="text-[10px] text-emerald-800/70 dark:text-emerald-100/70 font-bold uppercase tracking-widest mb-1">${t('salaryLabel')}</p>
+                        <p class="text-emerald-900 dark:text-emerald-50 font-black text-xl">${formattedSalary}</p>
                     </div>
-                `;
-                updateProgressBar();
-                progressInterval = setInterval(updateProgressBar, 1000); 
-            } else {
-                let cardBgClass = "bg-white dark:bg-stone-800 border-stone-100 dark:border-stone-700";
+                </div>
                 
-                if (status.nextHolidayStr) {
-                    if (status.workingDaysLeft <= 1) {
-                        cardBgClass = "bg-gradient-to-br from-emerald-100 to-emerald-300 dark:from-emerald-800/60 dark:to-emerald-700/70 border-emerald-300 dark:border-emerald-600";
-                    } else if (status.workingDaysLeft <= 3) {
-                        cardBgClass = "bg-gradient-to-br from-emerald-50 to-emerald-200/80 dark:from-emerald-900/40 dark:to-emerald-800/50 border-emerald-200 dark:border-emerald-700/60";
-                    } else if (status.workingDaysLeft <= 7) {
-                        cardBgClass = "bg-gradient-to-br from-stone-50 to-emerald-100/80 dark:from-stone-800 dark:to-emerald-900/30 border-emerald-100/50 dark:border-emerald-800/40";
-                    } else if (status.workingDaysLeft <= 14) {
-                        cardBgClass = "bg-gradient-to-br from-white to-emerald-50/50 dark:from-stone-800 dark:to-emerald-900/10 border-stone-100 dark:border-stone-700";
-                    }
-                }
-                
-                card.className = `rounded-[2rem] p-6 transition-all duration-1000 relative overflow-hidden border shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-h-[380px] h-full flex flex-col items-center justify-center ${cardBgClass}`;
-                
-                if (status.nextHolidayStr) {
-                    content.innerHTML = `
-                        <h2 class="text-stone-400 dark:text-stone-500 font-bold uppercase tracking-[0.3em] text-[9px] mb-2 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.1s_forwards]">${t('nextHolidayHeading')}</h2>
-                        
-                        <div class="mb-1 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards] flex items-baseline justify-center gap-2">
-                            <span class="text-[6rem] leading-[1] font-black text-stone-800 dark:text-white tracking-tighter drop-shadow-sm">${status.workingDaysLeft}</span>
-                        </div>
-                        
-                        <div class="flex flex-col items-center justify-center gap-1 mb-6 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]">
-                            <span class="text-stone-500 dark:text-stone-400 font-bold text-sm uppercase tracking-widest">${t('workdayLabel')}</span>
-                            <span class="text-stone-400 dark:text-stone-500 font-semibold text-xs tracking-wide">${status.totalCalendarDays} ${t('distanceDays')}</span>
-                        </div>
-                        
-                        <div class="flex flex-col space-y-5 w-full max-w-[280px] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
-                            
-                            <div class="text-center h-12 flex flex-col items-center justify-center">
-                                <p id="shift-countdown-label" class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 transition-colors"></p>
-                                <p id="shift-countdown-text" class="text-2xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm">--:--:--</p>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4 w-full">
-                                <div class="text-center">
-                                    <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">${t('overtimeLabel')}</p>
-                                    <p class="text-teal-600 dark:text-teal-400 font-black text-xl leading-tight truncate drop-shadow-sm">${otTextStr}</p>
-                                </div>
-                                <div class="text-center border-l border-stone-100 dark:border-stone-700">
-                                    <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">${t('salaryLabel')}</p>
-                                    <p class="text-teal-600 dark:text-teal-400 font-black text-xl leading-tight truncate drop-shadow-sm">${formattedSalary}</p>
-                                </div>
-                            </div>
-
-                            <div class="text-center pt-4 border-t border-stone-100 dark:border-stone-700">
-                                <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1.5">${t('nextHolidayLabel')}</p>
-                                <p class="text-stone-700 dark:text-stone-200 font-bold text-sm">${nextHolidayText}</p>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    content.innerHTML = `
-                        <div class="text-5xl select-none pointer-events-none mb-4 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.1s_forwards]">📅</div>
-                        <h2 class="text-2xl font-black text-stone-800 dark:text-white mb-2 tracking-tight opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards]">${t('noHolidayHeading')}</h2>
-                        <p class="text-sm text-stone-500 dark:text-stone-400 max-w-[220px] leading-relaxed break-words opacity-0 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]">${t('noHolidayDesc')}</p>
-                        
-                        <div class="mt-6 grid grid-cols-2 gap-4 w-full max-w-[280px] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
-                            <div class="text-center">
-                                <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">${t('overtimeLabel')}</p>
-                                <p class="text-teal-600 dark:text-teal-400 font-black text-xl leading-tight truncate drop-shadow-sm">${otTextStr}</p>
-                            </div>
-                            <div class="text-center border-l border-stone-100 dark:border-stone-700">
-                                <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">${t('salaryLabel')}</p>
-                                <p class="text-teal-600 dark:text-teal-400 font-black text-xl leading-tight truncate drop-shadow-sm">${formattedSalary}</p>
-                            </div>
-                        </div>
-
-                        <div class="mt-6 w-full h-12 flex flex-col items-center justify-center opacity-0 animate-[fadeInUp_0.6s_ease-out_0.45s_forwards]">
-                            <p id="shift-countdown-label" class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 transition-colors"></p>
-                            <p id="shift-countdown-text" class="text-2xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm">--:--:--</p>
-                        </div>
-                    `;
-                }
-                
-                window.updateWorkdayCountdown();
-                progressInterval = setInterval(window.updateWorkdayCountdown, 1000); 
+                <div class="text-center bg-white/20 dark:bg-black/20 px-6 py-3 rounded-2xl w-full max-w-[280px] shadow-sm">
+                    <p class="text-[9px] text-emerald-800/70 dark:text-emerald-100/70 font-bold uppercase tracking-widest mb-1">${t('nextHolidayLabel')}</p>
+                    <p class="text-emerald-900 dark:text-emerald-50 font-bold text-sm truncate">${nextHolidayText}</p>
+                    ${status.nextHolidayStr ? `<div class="mt-2 inline-block bg-emerald-900/10 dark:bg-emerald-100/10 px-2 py-0.5 rounded text-[10px] font-bold text-emerald-800 dark:text-emerald-100 border border-emerald-900/5 dark:border-emerald-100/5 shadow-sm">Sisa: ${status.workingDaysLeft} ${t('workdayLabel')}</div>` : ''}
+                </div>
+            </div>
+        `;
+        updateProgressBar();
+        progressInterval = setInterval(updateProgressBar, 1000); 
+    } else {
+        let cardBgClass = "bg-white dark:bg-stone-800 border-stone-100 dark:border-stone-700";
+        
+        if (status.nextHolidayStr) {
+            if (status.workingDaysLeft <= 1) {
+                cardBgClass = "bg-gradient-to-br from-emerald-100 to-emerald-300 dark:from-emerald-800/60 dark:to-emerald-700/70 border-emerald-300 dark:border-emerald-600";
+            } else if (status.workingDaysLeft <= 3) {
+                cardBgClass = "bg-gradient-to-br from-emerald-50 to-emerald-200/80 dark:from-emerald-900/40 dark:to-emerald-800/50 border-emerald-200 dark:border-emerald-700/60";
+            } else if (status.workingDaysLeft <= 7) {
+                cardBgClass = "bg-gradient-to-br from-stone-50 to-emerald-100/80 dark:from-stone-800 dark:to-emerald-900/30 border-emerald-100/50 dark:border-emerald-800/40";
+            } else if (status.workingDaysLeft <= 14) {
+                cardBgClass = "bg-gradient-to-br from-white to-emerald-50/50 dark:from-stone-800 dark:to-emerald-900/10 border-stone-100 dark:border-stone-700";
             }
         }
+        
+        card.className = `rounded-[2rem] p-6 transition-all duration-1000 relative overflow-hidden border shadow-[0_8px_30px_rgb(0,0,0,0.04)] min-h-[380px] h-full flex flex-col items-center justify-center ${cardBgClass}`;
+        
+        if (status.nextHolidayStr) {
+            content.innerHTML = `
+                <h2 class="text-stone-400 dark:text-stone-500 font-bold uppercase tracking-[0.3em] text-[9px] mb-2 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.1s_forwards]">${t('nextHolidayHeading')}</h2>
+                
+                <div class="mb-1 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards] flex items-baseline justify-center gap-2">
+                    <span class="text-[6rem] leading-[1] font-black text-stone-800 dark:text-white tracking-tighter drop-shadow-sm">${status.workingDaysLeft}</span>
+                </div>
+                
+                <div class="flex flex-col items-center justify-center gap-1 mb-6 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]">
+                    <span class="text-stone-500 dark:text-stone-400 font-bold text-sm uppercase tracking-widest">${t('workdayLabel')}</span>
+                    <!-- Baris "Hari menuju libur" dihapus dari sini -->
+                </div>
+                
+                <div class="flex flex-col space-y-5 w-full max-w-[280px] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
+                    
+                    <div class="text-center h-12 flex flex-col items-center justify-center">
+                        <p id="shift-countdown-label" class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 transition-colors"></p>
+                        <p id="shift-countdown-text" class="text-2xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm">--:--:--</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 w-full">
+                        <div class="text-center">
+                            <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">${t('overtimeLabel')}</p>
+                            <p class="text-teal-600 dark:text-teal-400 font-black text-xl leading-tight truncate drop-shadow-sm">${otTextStr}</p>
+                        </div>
+                        <div class="text-center border-l border-stone-100 dark:border-stone-700">
+                            <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">${t('salaryLabel')}</p>
+                            <p class="text-teal-600 dark:text-teal-400 font-black text-xl leading-tight truncate drop-shadow-sm">${formattedSalary}</p>
+                        </div>
+                    </div>
+
+                    <div class="text-center pt-4 border-t border-stone-100 dark:border-stone-700">
+                        <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1.5">${t('nextHolidayLabel')}</p>
+                        <p class="text-stone-700 dark:text-stone-200 font-bold text-sm">${nextHolidayText}</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            content.innerHTML = `
+                <div class="text-5xl select-none pointer-events-none mb-4 opacity-0 animate-[fadeInUp_0.6s_ease-out_0.1s_forwards]">📅</div>
+                <h2 class="text-2xl font-black text-stone-800 dark:text-white mb-2 tracking-tight opacity-0 animate-[fadeInUp_0.6s_ease-out_0.2s_forwards]">${t('noHolidayHeading')}</h2>
+                <p class="text-sm text-stone-500 dark:text-stone-400 max-w-[220px] leading-relaxed break-words opacity-0 animate-[fadeInUp_0.6s_ease-out_0.3s_forwards]">${t('noHolidayDesc')}</p>
+                
+                <div class="mt-6 grid grid-cols-2 gap-4 w-full max-w-[280px] opacity-0 animate-[fadeInUp_0.6s_ease-out_0.4s_forwards]">
+                    <div class="text-center">
+                        <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">${t('overtimeLabel')}</p>
+                        <p class="text-teal-600 dark:text-teal-400 font-black text-xl leading-tight truncate drop-shadow-sm">${otTextStr}</p>
+                    </div>
+                    <div class="text-center border-l border-stone-100 dark:border-stone-700">
+                        <p class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 truncate">${t('salaryLabel')}</p>
+                        <p class="text-teal-600 dark:text-teal-400 font-black text-xl leading-tight truncate drop-shadow-sm">${formattedSalary}</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 w-full h-12 flex flex-col items-center justify-center opacity-0 animate-[fadeInUp_0.6s_ease-out_0.45s_forwards]">
+                    <p id="shift-countdown-label" class="text-[10px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-widest mb-1 transition-colors"></p>
+                    <p id="shift-countdown-text" class="text-2xl font-mono font-bold text-stone-700 dark:text-stone-200 tabular-nums tracking-tighter drop-shadow-sm">--:--:--</p>
+                </div>
+            `;
+        }
+        
+        window.updateWorkdayCountdown();
+        progressInterval = setInterval(window.updateWorkdayCountdown, 1000); 
+    }
+}
+
 
         function updateProgressBar() {
             const now = new Date();
