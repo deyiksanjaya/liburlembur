@@ -1278,97 +1278,117 @@
         }
 
         function openShiftBubble(dateStr, btnElement) {
-            activeBubbleDate = dateStr;
-            const bubble = document.getElementById('shift-bubble');
-            const tail = document.getElementById('bubble-tail');
-            const deleteBtn = document.getElementById('btn-delete-shift');
-            
-            const localeStr = appSettings.language === 'ja' ? 'ja-JP' : 'id-ID';
-            const displayDate = new Date(dateStr).toLocaleDateString(localeStr, { day: 'numeric', month: 'short', year:'numeric' });
-            document.getElementById('bubble-date-label').innerText = displayDate;
-            
-            if (appSettings.customShifts[dateStr]) {
-                deleteBtn.classList.remove('hidden'); 
-                const shiftData = appSettings.customShifts[dateStr];
-                
-                if (typeof shiftData === 'string') {
-                    const endStr = shiftData;
-                    const [eHr, eMin] = endStr.split(':').map(Number);
-                    let startHr = (eHr - 9 + 24) % 24;
-                    document.getElementById('bubble-start-time').value = `${String(startHr).padStart(2,'0')}:${String(eMin).padStart(2,'0')}`;
-                    document.getElementById('bubble-end-time-input').value = endStr;
-                } else {
-                    document.getElementById('bubble-start-time').value = shiftData.start;
-                    document.getElementById('bubble-end-time-input').value = shiftData.end;
-                }
-            } else {
-                deleteBtn.classList.add('hidden'); 
-                document.getElementById('bubble-start-time').value = appSettings.startTime || '07:00';
-                document.getElementById('bubble-end-time-input').value = appSettings.endTime || '17:00';
-            }
-            
-            bubble.classList.remove('hidden');
-            
-            const container = document.querySelector('.max-w-md'); 
-            const containerRect = container.getBoundingClientRect();
-            const btnRect = btnElement.getBoundingClientRect();
-            
-            let topPos = btnRect.top - containerRect.top - bubble.offsetHeight - 12;
-            let isTop = true;
-            
-            if (topPos < 50) { 
-                topPos = btnRect.bottom - containerRect.top + 12;
-                isTop = false;
-            }
-            
-            let buttonCenter = btnRect.left - containerRect.left + (btnRect.width / 2);
-            let leftPos = buttonCenter - (bubble.offsetWidth / 2);
-            
-            const margin = 12;
-            const maxLeft = containerRect.width - bubble.offsetWidth - margin;
-            
-            if (leftPos < margin) leftPos = margin;
-            if (leftPos > maxLeft) leftPos = maxLeft;
-            
-            let tailLeft = buttonCenter - leftPos;
-            
-            bubble.style.top = topPos + 'px';
-            bubble.style.left = leftPos + 'px';
-            
-            tail.style.left = tailLeft + 'px';
-            tail.className = `absolute w-4 h-4 bg-white dark:bg-stone-800 border-stone-200 dark:border-stone-700 transform -translate-x-1/2 rotate-45 rounded-sm ${
-                isTop ? '-bottom-2 border-b border-r' : '-top-2 border-t border-l'
-            }`;
+    activeBubbleDate = dateStr;
+    const bubble = document.getElementById('shift-bubble');
+    const tail = document.getElementById('bubble-tail');
+    const deleteBtn = document.getElementById('btn-delete-shift');
+    
+    // Ambil elemen input
+    const startInput = document.getElementById('bubble-start-time');
+    const endInput = document.getElementById('bubble-end-time-input');
+    
+    const localeStr = appSettings.language === 'ja' ? 'ja-JP' : 'id-ID';
+    const displayDate = new Date(dateStr).toLocaleDateString(localeStr, { day: 'numeric', month: 'short', year:'numeric' });
+    document.getElementById('bubble-date-label').innerText = displayDate;
+    
+    // Fungsi bantuan untuk menghitung +9 jam (mendukung lewat tengah malam)
+    const getEndShift = (startStr) => {
+        if(!startStr) return '';
+        let [h, m] = startStr.split(':').map(Number);
+        h = (h + 9) % 24; // Tambah 9 jam, reset ke 0 jika lewat 24
+        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    };
 
-            setTimeout(() => {
-                bubble.classList.remove('opacity-0', 'invisible', 'scale-95');
-                bubble.classList.add('opacity-100', 'visible', 'scale-100');
-            }, 10);
-
-            document.getElementById('btn-save-shift').onclick = async () => {
-                const startStr = document.getElementById('bubble-start-time').value;
-                const endStr = document.getElementById('bubble-end-time-input').value;
-                if(!endStr || !startStr) return;
-                
-                appSettings.customShifts[dateStr] = { start: startStr, end: endStr };
-                closeShiftBubble();
-                
-                await syncWithLoading(() => {
-                    renderCalendar(); 
-                    window.updateShiftIndicator();
-                });
-            };
-
-            document.getElementById('btn-delete-shift').onclick = async () => {
-                delete appSettings.customShifts[dateStr];
-                closeShiftBubble();
-                
-                await syncWithLoading(() => {
-                    renderCalendar();
-                    window.updateShiftIndicator();
-                });
-            };
+    if (appSettings.customShifts[dateStr]) {
+        deleteBtn.classList.remove('hidden'); 
+        const shiftData = appSettings.customShifts[dateStr];
+        
+        if (typeof shiftData === 'string') {
+            const endStr = shiftData;
+            const [eHr, eMin] = endStr.split(':').map(Number);
+            let startHr = (eHr - 9 + 24) % 24;
+            startInput.value = `${String(startHr).padStart(2,'0')}:${String(eMin).padStart(2,'0')}`;
+            endInput.value = endStr;
+        } else {
+            startInput.value = shiftData.start;
+            endInput.value = shiftData.end;
         }
+    } else {
+        deleteBtn.classList.add('hidden'); 
+        const defaultStart = appSettings.startTime || '07:00';
+        startInput.value = defaultStart;
+        // Pre-fill jam pulang otomatis +9 jam dari default
+        endInput.value = getEndShift(defaultStart); 
+    }
+
+    // EVENT LISTENER: Saat Jam Masuk diubah, update Jam Pulang otomatis
+    startInput.onchange = (e) => {
+        endInput.value = getEndShift(e.target.value);
+    };
+    
+    bubble.classList.remove('hidden');
+    
+    const container = document.querySelector('.max-w-md'); 
+    const containerRect = container.getBoundingClientRect();
+    const btnRect = btnElement.getBoundingClientRect();
+    
+    let topPos = btnRect.top - containerRect.top - bubble.offsetHeight - 12;
+    let isTop = true;
+    
+    if (topPos < 50) { 
+        topPos = btnRect.bottom - containerRect.top + 12;
+        isTop = false;
+    }
+    
+    let buttonCenter = btnRect.left - containerRect.left + (btnRect.width / 2);
+    let leftPos = buttonCenter - (bubble.offsetWidth / 2);
+    
+    const margin = 12;
+    const maxLeft = containerRect.width - bubble.offsetWidth - margin;
+    
+    if (leftPos < margin) leftPos = margin;
+    if (leftPos > maxLeft) leftPos = maxLeft;
+    
+    let tailLeft = buttonCenter - leftPos;
+    
+    bubble.style.top = topPos + 'px';
+    bubble.style.left = leftPos + 'px';
+    
+    tail.style.left = tailLeft + 'px';
+    tail.className = `absolute w-4 h-4 bg-white dark:bg-stone-800 border-stone-200 dark:border-stone-700 transform -translate-x-1/2 rotate-45 rounded-sm ${
+        isTop ? '-bottom-2 border-b border-r' : '-top-2 border-t border-l'
+    }`;
+
+    setTimeout(() => {
+        bubble.classList.remove('opacity-0', 'invisible', 'scale-95');
+        bubble.classList.add('opacity-100', 'visible', 'scale-100');
+    }, 10);
+
+    document.getElementById('btn-save-shift').onclick = async () => {
+        const startStr = startInput.value;
+        const endStr = endInput.value;
+        if(!endStr || !startStr) return;
+        
+        appSettings.customShifts[dateStr] = { start: startStr, end: endStr };
+        closeShiftBubble();
+        
+        await syncWithLoading(() => {
+            renderCalendar(); 
+            window.updateShiftIndicator();
+        });
+    };
+
+    document.getElementById('btn-delete-shift').onclick = async () => {
+        delete appSettings.customShifts[dateStr];
+        closeShiftBubble();
+        
+        await syncWithLoading(() => {
+            renderCalendar();
+            window.updateShiftIndicator();
+        });
+    };
+}
+
 
         function closeShiftBubble() {
             const bubble = document.getElementById('shift-bubble');
